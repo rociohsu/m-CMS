@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>點餐平台後台管理系統</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* 隱藏滾動條 */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* 彈窗滑入動畫 */
+    @keyframes slideIn {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .animate-in {
+      animation: slideIn 0.25s ease-out forwards;
+    }
+    
+    /* 漸變與陰影微調 */
+    .shadow-premium {
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 5px 15px -8px rgba(0, 0, 0, 0.05);
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 antialiased font-sans">
+
+  <!-- 為了完美呈現手機版 WebView，將最大寬度限制在 max-w-md 且水平置中 -->
+  <div class="max-w-md mx-auto min-h-screen bg-gray-50 flex flex-col relative shadow-2xl">
+    
+    <!-- 頂部導航與分頁 -->
+    <header class="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <div class="px-4 pt-5 pb-3 flex justify-between items-center">
+        <h1 class="text-[30px] font-bold text-gray-900 leading-tight">菜單管理</h1>
+        <div class="flex space-x-2">
+          <button 
+            onclick="toggleBatchMode()"
+            id="batch-btn"
+            class="flex items-center space-x-1 px-3 py-1.5 rounded-full text-[13px] font-bold bg-orange-50 text-orange-500 transition-colors"
+          >
+            <i data-lucide="list-checks" class="w-[18px] h-[18px]"></i>
+            <span id="batch-btn-text">批次編輯</span>
+          </button>
+          <button 
+            onclick="openStoreSettings()"
+            class="p-2 bg-gray-50 text-gray-400 rounded-full hover:bg-orange-50 hover:text-orange-500 transition-colors shadow-sm"
+          >
+            <i data-lucide="settings" class="w-[22px] h-[22px]"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab 切換 -->
+      <div class="flex px-4 border-b border-gray-50">
+        <button onclick="switchTab('main')" id="tab-main" class="flex-1 py-3 text-[15px] font-bold border-b-2 text-center transition-all border-orange-500 text-orange-500">主商品</button>
+        <button onclick="switchTab('addon')" id="tab-addon" class="flex-1 py-3 text-[15px] font-bold border-b-2 text-center transition-all border-transparent text-gray-400">加購品規格</button>
+        <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-3 text-[15px] font-bold border-b-2 text-center transition-all border-transparent text-gray-400">時段菜單</button>
+      </div>
+      
+      <!-- 搜尋與快速分類 (僅在主商品 Tab 顯示) -->
+      <div id="search-category-bar" class="px-4 py-3">
+        <div class="relative mb-3">
+          <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"></i>
+          <input 
+            type="text" 
+            id="search-input"
+            oninput="handleSearch(this.value)"
+            placeholder="搜尋主商品..." 
+            class="w-full bg-gray-100 border-none rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-orange-500 transition-all outline-none text-[15px]"
+          />
+        </div>
+        <div class="flex items-center space-x-2">
+          <div id="category-capsules" class="flex space-x-2 overflow-x-auto no-scrollbar flex-grow py-1">
+            <!-- 類別膠囊動態產生 -->
+          </div>
+          <button onclick="openCategoryModal()" class="p-2.5 bg-gray-100 text-gray-600 rounded-lg shadow-sm flex-shrink-0 active:bg-orange-50 active:text-orange-500 transition-colors">
+            <i data-lucide="settings-2" class="w-[20px] h-[20px]"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主要內容展示區 -->
+    <main id="main-content" class="px-4 py-4 flex-grow space-y-3 pb-24">
+      <!-- 列表清單將由此動態渲染 -->
+    </main>
+
+    <!-- 新增按鈕 (FAB) -->
+    <button 
+      id="global-fab"
+      onclick="handleFabClick()"
+      class="fixed bottom-8 right-6 w-16 h-16 bg-orange-500 text-white rounded-full shadow-2xl flex items-center justify-center transform active:scale-90 transition-transform z-20"
+    >
+      <i data-lucide="plus" class="w-8 h-8"></i>
+    </button>
+
+    <!-- 統一批次編輯底欄 -->
+    <div 
+      id="batch-bar" 
+      class="fixed bottom-6 left-4 right-4 bg-gray-900 text-white rounded-[2rem] p-6 shadow-2xl z-30 hidden"
+    >
+      <div class="flex items-center justify-between mb-5 border-b border-gray-700 pb-3">
+        <span id="batch-count" class="text-[15px] font-bold">已選取 0 項內容</span>
+        <div class="flex items-center space-x-4">
+          <button onclick="batchSelectAll()" class="text-[13px] text-orange-400 font-bold">全選</button>
+          <button onclick="toggleBatchMode(false)" class="text-[13px] text-gray-400 font-medium">取消</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-5 gap-2 text-center">
+        <button onclick="triggerBatchAction('active')" class="flex flex-col items-center">
+          <div class="p-3 bg-green-500/20 text-green-400 rounded-2xl mb-2"><i data-lucide="play-circle" class="w-6 h-6"></i></div>
+          <span class="text-[13px]">上架</span>
+        </button>
+        <button onclick="triggerBatchAction('inactive')" class="flex flex-col items-center">
+          <div class="p-3 bg-gray-500/20 text-gray-400 rounded-2xl mb-2"><i data-lucide="stop-circle" class="w-6 h-6"></i></div>
+          <span class="text-[13px]">下架</span>
+        </button>
+        <button onclick="triggerBatchAction('inactive-today')" class="flex flex-col items-center">
+          <div class="p-3 bg-blue-500/20 text-blue-400 rounded-2xl mb-2"><i data-lucide="calendar-x" class="w-6 h-6"></i></div>
+          <span class="text-[13px]">今日下架</span>
+        </button>
+        <button id="batch-restock-btn" onclick="triggerBatchAction('restock')" class="flex flex-col items-center">
+          <div class="p-3 bg-orange-500/20 text-orange-400 rounded-2xl mb-2"><i data-lucide="rotate-ccw" class="w-6 h-6"></i></div>
+          <span class="text-[13px]">補庫存</span>
+        </button>
+        <button onclick="triggerBatchAction('delete')" class="flex flex-col items-center text-red-400">
+          <div class="p-3 bg-red-500/20 rounded-2xl mb-2"><i data-lucide="trash" class="w-6 h-6"></i></div>
+          <span class="text-[13px]">刪除</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== MODALS 彈窗區 ==================== -->
+
+  <!-- 1. 主商品 編輯/新增 彈窗 -->
+  <div id="modal-item" class="fixed inset-0 bg-white z-50 flex flex-col hidden overflow-y-auto">
+    <div class="px-4 py-5 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 shadow-sm z-10">
+      <button onclick="closeItemModal()" class="p-1 text-gray-600"><i data-lucide="arrow-left" class="w-7 h-7"></i></button>
+      <h2 id="modal-item-title" class="text-[20px] font-bold">新增品項</h2>
+      <button onclick="saveItem()" class="px-5 py-2 bg-orange-500 text-white text-[15px] font-bold rounded-full shadow-md active:scale-95 transition-transform">儲存</button>
+    </div>
+    
+    <div class="p-4 space-y-6 pb-20 max-w-md mx-auto w-full">
+      <!-- 圖片上傳區 -->
+      <div class="group relative w-full h-56 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200 flex flex-col items-center justify-center overflow-hidden">
+        <div id="img-preview-container" class="w-full h-full hidden relative">
+          <img id="item-img-preview" src="" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-black/30 flex items-center justify-center space-x-5">
+            <label class="cursor-pointer bg-white/90 p-4 rounded-full shadow-xl">
+              <i data-lucide="refresh-cw" class="text-orange-500 w-6 h-6"></i>
+              <input type="file" class="hidden" accept="image/*" onchange="previewImage(event)" />
+            </label>
+            <button onclick="removeImage()" class="bg-red-500/90 p-4 rounded-full text-white shadow-xl">
+              <i data-lucide="trash-2" class="w-6 h-6"></i>
+            </button>
+          </div>
+        </div>
+        <label id="img-placeholder" class="cursor-pointer flex flex-col items-center justify-center w-full h-full">
+          <i data-lucide="camera" class="text-orange-500 mb-3 w-10 h-10"></i>
+          <span class="text-[15px] font-medium text-gray-500">上傳商品圖片</span>
+          <input type="file" class="hidden" accept="image/*" onchange="previewImage(event)" />
+        </label>
+      </div>
+
+      <!-- 表單欄位 -->
+      <div class="space-y-6">
+        <div>
+          <label class="block text-[13px] font-bold text-gray-400 mb-2 ml-1">品項名稱</label>
+          <input type="text" id="item-name" placeholder="輸入商品名稱" class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 outline-none focus:border-orange-500 transition-all text-[15px] font-bold" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[13px] font-bold text-gray-400 mb-2 ml-1">商品售價</label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+              <input type="number" id="item-price" class="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-10 pr-5 py-4 outline-none focus:border-orange-500 transition-all text-[15px] font-bold" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-[13px] font-bold text-gray-400 mb-2 ml-1">所屬分類</label>
+            <div class="flex gap-2">
+              <div class="relative flex-grow">
+                <select id="item-category" class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 outline-none appearance-none bg-white text-[15px] font-bold">
+                  <!-- 分類選項動態載入 -->
+                </select>
+                <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-5 h-5"></i>
+              </div>
+              <button onclick="openCategoryModal()" class="p-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-400 shadow-sm active:bg-orange-50 active:text-orange-500">
+                <i data-lucide="settings-2" class="w-5 h-5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 供應狀態分段開關 -->
+        <div>
+          <label class="block text-[13px] font-bold text-gray-400 mb-3 ml-1">供應狀態控制</label>
+          <div class="flex bg-gray-100 p-1.5 rounded-[1.5rem] shadow-inner border border-gray-200/50">
+            <button onclick="setItemStatus('active')" id="btn-status-active" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">上架</button>
+            <button onclick="setItemStatus('inactive')" id="btn-status-inactive" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">下架</button>
+            <button onclick="setItemStatus('inactive-today')" id="btn-status-inactive-today" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">今日下架</button>
+          </div>
+        </div>
+
+        <!-- 開放備註開關 -->
+        <div class="bg-gray-50 rounded-[2rem] p-6 border border-gray-100 flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="p-3 bg-white text-orange-500 rounded-2xl shadow-sm"><i data-lucide="message-square" class="w-6 h-6"></i></div>
+            <div>
+              <span class="text-[15px] font-bold text-gray-800">開放餐點備註</span>
+              <p class="text-[13px] text-gray-400">允許顧客填寫特殊要求</p>
+            </div>
+          </div>
+          <button id="btn-remarks-toggle" onclick="toggleItemRemarks()"><i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i></button>
+        </div>
+
+        <!-- 庫存管理模組 -->
+        <div class="bg-gray-50 rounded-[2rem] p-6 border border-gray-100">
+          <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center space-x-4">
+              <div class="p-3 bg-white text-orange-500 rounded-2xl shadow-sm"><i data-lucide="box" class="w-6 h-6"></i></div>
+              <span class="text-[15px] font-bold text-gray-800">庫存管理功能</span>
+            </div>
+            <button id="btn-stock-toggle" onclick="toggleItemStock()"><i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i></button>
+          </div>
+          <div id="stock-fields" class="grid grid-cols-2 gap-4 hidden">
+            <div class="space-y-2">
+              <label class="text-[13px] font-bold text-gray-400 ml-1">剩餘庫存</label>
+              <input type="number" id="item-stock" placeholder="0" class="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3.5 text-[15px] font-bold outline-none focus:ring-1 focus:ring-orange-500" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-[13px] font-bold text-gray-400 ml-1">自動回復庫存</label>
+              <input type="number" id="item-restock" placeholder="0" class="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3.5 text-[15px] font-bold outline-none focus:ring-1 focus:ring-orange-500" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 套用加購規格 -->
+        <div class="bg-gray-50 rounded-[2rem] p-6 border border-gray-100">
+          <label class="block text-[15px] font-bold text-gray-700 mb-4 flex items-center">
+            <i data-lucide="layers" class="mr-2 text-orange-500 w-5 h-5"></i> 套盤規格
+          </label>
+          <div id="item-addons-list" class="space-y-3">
+            <!-- 加購規格選取清單動態載入 -->
+          </div>
+        </div>
+
+        <!-- 標籤管理 -->
+        <div>
+          <label class="block text-[15px] font-bold text-gray-700 mb-3 flex items-center">
+            <i data-lucide="tag" class="mr-2 text-orange-500 w-5 h-5"></i> 商品標籤
+          </label>
+          <div id="item-tags-container" class="flex flex-wrap gap-2 mb-4">
+            <!-- 標籤小藥丸動態產生 -->
+          </div>
+          <div class="flex gap-3">
+            <input type="text" id="tag-input" placeholder="新增標籤" class="flex-grow bg-gray-50 border border-gray-200 rounded-2xl px-5 py-3.5 text-[15px] outline-none focus:border-orange-500" />
+            <button onclick="addTagFromInput()" class="p-3.5 bg-gray-100 text-gray-600 rounded-2xl hover:bg-orange-100 active:scale-95 transition-all">
+              <i data-lucide="plus" class="w-6 h-6"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 刪除此品項按鈕 -->
+      <button id="delete-item-btn" onclick="deleteCurrentItem()" class="w-full py-5 text-red-500 text-[15px] font-bold border border-red-100 rounded-3xl mt-8 mb-12 shadow-sm active:bg-red-50 transition-colors hidden">刪除此品項</button>
+    </div>
+  </div>
+
+  <!-- 2. 加購規格 編輯/新增 彈窗 -->
+  <div id="modal-addon" class="fixed inset-0 bg-white z-50 flex flex-col hidden overflow-y-auto">
+    <div class="px-4 py-5 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 shadow-sm z-10">
+      <button onclick="closeAddonModal()" class="p-1 text-gray-600"><i data-lucide="arrow-left" class="w-7 h-7"></i></button>
+      <h2 id="modal-addon-title" class="text-[20px] font-bold">規格組設定</h2>
+      <button onclick="saveAddonGroup()" class="px-5 py-2 bg-orange-500 text-white text-[15px] font-bold rounded-full shadow-md">儲存</button>
+    </div>
+
+    <div class="p-4 space-y-8 pb-20 max-w-md mx-auto w-full">
+      <div>
+        <label class="block text-[13px] font-bold text-gray-400 mb-2 ml-1">規格組名稱</label>
+        <input type="text" id="addon-group-name" placeholder="例如：飲品冰度、加購套餐" class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 outline-none focus:border-orange-500 transition-all text-[15px] font-bold" />
+      </div>
+
+      <!-- 供應狀態控制 -->
+      <div>
+        <label class="block text-[13px] font-bold text-gray-400 mb-3 ml-1">供應狀態設定</label>
+        <div class="flex bg-gray-100 p-1.5 rounded-[1.5rem] shadow-inner border border-gray-200/50">
+          <button onclick="setAddonGroupStatus('active')" id="btn-addon-status-active" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">上架</button>
+          <button onclick="setAddonGroupStatus('inactive')" id="btn-addon-status-inactive" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">下架</button>
+          <button onclick="setAddonGroupStatus('inactive-today')" id="btn-addon-status-inactive-today" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">今日下架</button>
+        </div>
+      </div>
+
+      <!-- 單選/複選設定 -->
+      <div>
+        <label class="block text-[13px] font-bold text-gray-400 mb-2 ml-1">選取限制</label>
+        <div class="flex bg-gray-100 p-1.5 rounded-[1.5rem]">
+          <button onclick="setAddonSelectionMode('single')" id="btn-addon-mode-single" class="flex-1 py-2 text-[13px] rounded-xl transition-all text-gray-500">單選</button>
+          <button onclick="setAddonSelectionMode('multiple')" id="btn-addon-mode-multiple" class="flex-1 py-2 text-[13px] rounded-xl transition-all text-gray-500">複選</button>
+        </div>
+      </div>
+
+      <!-- 規格選項 (新增置頂) -->
+      <div class="space-y-6">
+        <div class="flex justify-between items-center px-1 border-b border-gray-100 pb-3">
+          <label class="text-[15px] font-bold text-gray-800">規格選項管理</label>
+          <button onclick="addAddonOption()" class="text-orange-500 text-[13px] font-bold flex items-center bg-orange-50 px-3 py-1.5 rounded-full">
+            <i data-lucide="plus" class="w-4 h-4 mr-1"></i> 新增選項
+          </button>
+        </div>
+        <div id="addon-options-list" class="space-y-4">
+          <!-- 規格選項卡片清單 (動態渲染) -->
+        </div>
+      </div>
+
+      <!-- 刪除此規格組按鈕 -->
+      <button id="delete-addon-group-btn" onclick="deleteCurrentAddonGroup()" class="w-full py-5 bg-white text-red-500 text-[15px] font-bold border border-red-100 rounded-3xl mt-8 mb-12 shadow-sm active:bg-red-50 transition-colors hidden">刪除此規格組</button>
+    </div>
+  </div>
+
+  <!-- 3. 時段菜單 編輯/新增 彈窗 -->
+  <div id="modal-menu" class="fixed inset-0 bg-white z-50 flex flex-col hidden overflow-y-auto">
+    <div class="px-4 py-5 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 shadow-sm z-10">
+      <button onclick="closeMenuModal()" class="p-1 text-gray-600"><i data-lucide="arrow-left" class="w-7 h-7"></i></button>
+      <h2 id="modal-menu-title" class="text-[20px] font-bold">新增時段菜單</h2>
+      <button onclick="saveScheduledMenu()" class="px-5 py-2 bg-orange-500 text-white text-[15px] font-bold rounded-full shadow-md">儲存</button>
+    </div>
+
+    <div class="p-4 space-y-8 pb-20 max-w-md mx-auto w-full">
+      <div>
+        <label class="block text-[13px] font-bold text-gray-400 mb-2 ml-1">菜單名稱</label>
+        <input type="text" id="menu-name" placeholder="例如：午間套餐、深夜菜單" class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 outline-none focus:border-orange-500 transition-all text-[15px] font-bold" />
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="space-y-2">
+          <label class="text-[13px] font-bold text-gray-400 ml-1">開始供應時間</label>
+          <input type="time" id="menu-start" class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 outline-none text-[15px] font-bold" />
+        </div>
+        <div class="space-y-2">
+          <label class="text-[13px] font-bold text-gray-400 ml-1">結束供應時間</label>
+          <input type="time" id="menu-end" class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 outline-none text-[15px] font-bold" />
+        </div>
+      </div>
+
+      <!-- 供應狀態設定 -->
+      <div>
+        <label class="block text-[13px] font-bold text-gray-400 mb-3 ml-1">供應狀態設定</label>
+        <div class="flex bg-gray-100 p-1.5 rounded-[1.5rem] shadow-inner border border-gray-200/50">
+          <button onclick="setMenuStatus('active')" id="btn-menu-status-active" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">啟用</button>
+          <button onclick="setMenuStatus('inactive')" id="btn-menu-status-inactive" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">停用</button>
+          <button onclick="setMenuStatus('inactive-today')" id="btn-menu-status-inactive-today" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">今日下架</button>
+        </div>
+      </div>
+
+      <!-- 純淨包含主商品選擇清單 -->
+      <div class="bg-gray-50 rounded-[2rem] p-6 border border-gray-100">
+        <label class="block text-[15px] font-bold text-gray-700 mb-5 flex items-center">
+          <i data-lucide="layout-grid" class="mr-2 text-orange-500 w-5 h-5"></i> 選擇包含主商品
+        </label>
+        <div id="menu-items-select-list" class="space-y-3">
+          <!-- 主商品選項動態載入 -->
+        </div>
+      </div>
+
+      <!-- 刪除時段菜單按鈕 -->
+      <button id="delete-menu-btn" onclick="deleteCurrentMenu()" class="w-full py-5 bg-white text-red-500 text-[15px] font-bold border border-red-100 rounded-3xl mt-8 mb-12 shadow-sm active:bg-red-50 transition-colors hidden">刪除此時段菜單</button>
+    </div>
+  </div>
+
+  <!-- 4. 商店全域設定 彈窗 -->
+  <div id="modal-store-settings" class="fixed inset-0 bg-white z-[70] flex flex-col hidden overflow-y-auto">
+    <div class="px-4 py-5 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 shadow-sm z-10">
+      <button onclick="closeStoreSettings()" class="p-1 text-gray-600"><i data-lucide="arrow-left" class="w-7 h-7"></i></button>
+      <h2 class="text-[20px] font-bold">商店全域設定</h2>
+      <div class="w-8"></div>
+    </div>
+    
+    <div class="flex-grow overflow-y-auto px-4 py-6 space-y-8 max-w-md mx-auto w-full">
+      <!-- 客人備註開關 -->
+      <section class="bg-gray-50 rounded-3xl p-5 border border-gray-100">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="p-3 bg-orange-100 text-orange-600 rounded-2xl"><i data-lucide="message-square" class="w-6 h-6"></i></div>
+            <div>
+              <h3 class="font-bold text-gray-800 text-[15px]">顧客整單備註</h3>
+              <p class="text-[13px] text-gray-400 mt-0.5">是否允許結帳時填寫整單需求</p>
+            </div>
+          </div>
+          <button id="btn-global-remarks-toggle" onclick="toggleGlobalRemarks()">
+            <i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- 結帳加購品設定 -->
+      <section class="space-y-5">
+        <div class="flex justify-between items-end px-2">
+          <div class="flex items-center space-x-4">
+            <div class="p-3 bg-blue-100 text-blue-600 rounded-2xl"><i data-lucide="shopping-bag" class="w-6 h-6"></i></div>
+            <div>
+              <h3 class="font-bold text-gray-800 text-[15px]">結帳加購品設定</h3>
+              <p class="text-[13px] text-gray-400 mt-0.5">於結帳前詢問 (如提袋、餐具)</p>
+            </div>
+          </div>
+          <button onclick="addNewCheckoutAddon()" class="text-orange-500 text-[13px] font-bold flex items-center bg-orange-50 px-4 py-2 rounded-full active:scale-95 transition-transform">
+            <i data-lucide="plus" class="w-4 h-4 mr-1"></i> 新增
+          </button>
+        </div>
+        <div id="checkout-addons-list" class="space-y-4">
+          <!-- 結帳加購品卡片 (動態渲染) -->
+        </div>
+      </section>
+    </div>
+    
+    <div class="p-5 bg-gray-50 border-t border-gray-100">
+      <button onclick="closeStoreSettings()" class="w-full py-4 bg-gray-900 text-white font-bold rounded-2xl text-[15px] active:scale-95 transition-transform shadow-lg">完成設定</button>
+    </div>
+  </div>
+
+  <!-- 5. 分類管理 彈窗 -->
+  <div id="modal-category" class="fixed inset-0 bg-white z-[60] flex flex-col hidden overflow-y-auto">
+    <div class="px-4 py-5 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 shadow-sm z-10">
+      <button onclick="closeCategoryModal()" class="p-1 text-gray-600"><i data-lucide="arrow-left" class="w-7 h-7"></i></button>
+      <h2 class="text-[20px] font-bold">管理分類清單</h2>
+      <div class="w-8"></div>
+    </div>
+    <div class="p-4 space-y-6 flex-grow overflow-y-auto max-w-md mx-auto w-full">
+      <div class="flex gap-3">
+        <input type="text" id="new-category-input" placeholder="輸入新分類名稱" class="flex-grow bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-[15px] outline-none focus:border-orange-500 transition-all font-bold" />
+        <button onclick="addCategory()" class="bg-orange-500 text-white px-5 rounded-2xl active:scale-90 transition-transform">
+          <i data-lucide="plus" class="w-7 h-7"></i>
+        </button>
+      </div>
+      <div id="categories-list-container" class="space-y-3">
+        <!-- 分類列表項目與拖拉手柄 (動態載入) -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT 邏輯區 ==================== -->
+  <script>
+    // --- 應用程式狀態 ---
+    const state = {
+      activeTab: 'main',
+      isBatchMode: false,
+      selectedIds: [],
+      
+      storeSettings: {
+        globalRemarksEnabled: true,
+        checkoutAddons: [
+          { id: 'ca1', name: '購物袋', price: 2, status: 'active' },
+          { id: 'ca2', name: '免洗餐具 (筷子/湯匙)', price: 0, status: 'active' },
+          { id: 'ca3', name: '加購吸管', price: 1, status: 'inactive' }
+        ]
+      },
+
+      items: [
+        { 
+          id: 1, 
+          name: '招牌紅燒牛肉麵', 
+          price: 180, 
+          category: '麵食', 
+          status: 'active', 
+          description: '嚴選本土牛肉，慢火熬煮8小時。', 
+          tags: ['人氣最高', '微辣'],
+          image: 'https://images.unsplash.com/photo-1624300629298-e9de39c13be5?q=80&w=400&h=400&fit=crop',
+          stockEnabled: true,
+          currentStock: 15,
+          autoRestock: 50,
+          type: 'main',
+          addonGroupIds: ['g3'],
+          remarksEnabled: true 
+        },
+        { 
+          id: 2, 
+          name: '特級錫蘭紅茶', 
+          price: 40, 
+          category: '飲料', 
+          status: 'inactive', 
+          description: '琥珀色澤，茶韻悠長。',
+          tags: ['冷熱皆宜'],
+          image: 'https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?q=80&w=400&h=400&fit=crop',
+          stockEnabled: false,
+          currentStock: 0,
+          autoRestock: 0,
+          type: 'main',
+          addonGroupIds: ['g1', 'g2'],
+          remarksEnabled: false 
+        }
+      ],
+
+      addonGroups: [
+        {
+          id: 'g1',
+          name: '冰度選擇',
+          status: 'active', 
+          selectionMode: 'single', 
+          options: [
+            { id: 'o1', name: '正常冰', price: 0, subGroupIds: [] },
+            { id: 'o2', name: '去冰', price: 0, subGroupIds: [] },
+            { id: 'o3', name: '微冰', price: 0, subGroupIds: [] },
+            { id: 'o4', name: '熱的', price: 0, subGroupIds: [] }
+          ]
+        },
+        {
+          id: 'g2',
+          name: '甜度選擇',
+          status: 'inactive', 
+          selectionMode: 'single',
+          options: [
+            { id: 'o5', name: '全糖', price: 0, subGroupIds: [] },
+            { id: 'o6', name: '半糖', price: 0, subGroupIds: [] },
+            { id: 'o7', name: '微糖', price: 0, subGroupIds: [] },
+            { id: 'o8', name: '無糖', price: 0, subGroupIds: [] }
+          ]
+        },
+        {
+          id: 'g3',
+          name: '套餐升級',
+          status: 'active',
+          selectionMode: 'multiple',
+          options: [
+            { id: 'o9', name: '大份薯條', price: 30, subGroupIds: [] },
+            { id: 'o10', name: '今日甜點', price: 45, subGroupIds: [] },
+            { id: 'o11', name: '經典紅茶', price: 0, subGroupIds: ['g1', 'g2'] },
+            { id: 'o12', name: '四季青茶', price: 10, subGroupIds: ['g1', 'g2'] }
+          ]
+        }
+      ],
+
+      scheduledMenus: [
+        { id: 'm1', name: '早午餐菜單', startTime: '08:00', endTime: '14:00', itemIds: [1, 2], status: 'active' },
+        { id: 'm2', name: '宵夜限定菜單', startTime: '22:00', endTime: '02:00', itemIds: [1], status: 'inactive-today' }
+      ],
+
+      categories: ['麵食', '飯類', '點心', '飲料'],
+      activeCategory: '全部',
+      searchTerm: ''
+    };
+
+    // 拖曳暫存指引
+    let draggedIndex = null;
+
+    // 初始化載入
+    window.addEventListener('DOMContentLoaded', () => {
+      renderAll();
+    });
+
+    // 統一渲染控制
+    function renderAll() {
+      renderCategoryCapsules();
+      renderList();
+      renderFAB();
+      renderBatchBar();
+      lucide.createIcons();
+    }
+
+    // --- TAB 切換邏輯 ---
+    function switchTab(tab) {
+      state.activeTab = tab;
+      state.isBatchMode = false;
+      state.selectedIds = [];
+      
+      // 更新 Tab 按鈕樣式
+      ['main', 'addon', 'menu'].forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === tab) {
+          btn.classList.add('border-orange-500', 'text-orange-500');
+          btn.classList.remove('border-transparent', 'text-gray-400');
+        } else {
+          btn.classList.remove('border-orange-500', 'text-orange-500');
+          btn.classList.add('border-transparent', 'text-gray-400');
+        }
+      });
+
+      // 搜尋分類控制列顯示
+      const bar = document.getElementById('search-category-bar');
+      if (tab === 'main') {
+        bar.classList.remove('hidden');
+      } else {
+        bar.classList.add('hidden');
+      }
+
+      renderAll();
+    }
+
+    // --- 分類導覽列渲染 ---
+    function renderCategoryCapsules() {
+      const container = document.getElementById('category-capsules');
+      if (!container) return;
+
+      let html = `<button onclick="selectCategory('全部')" class="px-4 py-2 rounded-full text-[13px] whitespace-nowrap transition-colors ${state.activeCategory === '全部' ? 'bg-gray-800 text-white' : 'bg-white text-gray-500 border border-gray-200'}">全部</button>`;
+      
+      state.categories.forEach(cat => {
+        html += `<button onclick="selectCategory('${cat}')" class="px-4 py-2 rounded-full text-[13px] whitespace-nowrap transition-colors ${state.activeCategory === cat ? 'bg-gray-800 text-white' : 'bg-white text-gray-500 border border-gray-200'}">${cat}</button>`;
+      });
+      container.innerHTML = html;
+    }
+
+    function selectCategory(cat) {
+      state.activeCategory = cat;
+      renderAll();
+    }
+
+    function handleSearch(val) {
+      state.searchTerm = val.trim().toLowerCase();
+      renderList();
+      lucide.createIcons();
+    }
+
+    // --- 核心清單渲染區 ---
+    function renderList() {
+      const container = document.getElementById('main-content');
+      if (state.activeTab === 'main') {
+        renderMainItems(container);
+      } else if (state.activeTab === 'addon') {
+        renderAddonGroups(container);
+      } else if (state.activeTab === 'menu') {
+        renderScheduledMenus(container);
+      }
+    }
+
+    // 1. 主商品渲染
+    function renderMainItems(container) {
+      const filtered = state.items.filter(item => {
+        const matchesCategory = state.activeCategory === '全部' || item.category === state.activeCategory;
+        const matchesSearch = item.name.toLowerCase().includes(state.searchTerm);
+        return matchesCategory && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-center py-12 text-gray-400 text-[15px] italic">無符合之主商品項目</div>`;
+        return;
+      }
+
+      let html = '';
+      filtered.forEach((item, idx) => {
+        const isSelected = state.selectedIds.includes(item.id);
+        const isInactive = item.status !== 'active' || (item.stockEnabled && item.currentStock <= 0);
+        const cardClass = `bg-white rounded-2xl p-4 shadow-sm border transition-all flex items-center space-x-4 
+          ${isSelected ? 'border-orange-500 bg-orange-50/30' : 'border-gray-100'} 
+          ${isInactive ? 'bg-gray-50 opacity-60 grayscale-[0.5]' : ''} 
+          ${!state.isBatchMode ? 'cursor-move active:bg-gray-50 shadow-md' : ''}`;
+
+        html += `
+          <div 
+            class="${cardClass}" 
+            draggable="${!state.isBatchMode}"
+            ondragstart="handleDragStart(event, ${idx})"
+            ondragover="handleDragOver(event)"
+            ondragenter="handleDragEnter(${idx})"
+            ondragend="handleDragEnd('main')"
+            onclick="handleItemClick(event, ${item.id})"
+          >
+            <!-- 批次選取/拖拉手柄 -->
+            ${state.isBatchMode ? `
+              <div class="w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? 'bg-orange-500 border-orange-500 text-white' : 'border-gray-300'}">
+                ${isSelected ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
+              </div>
+            ` : `
+              <div class="p-1 text-gray-300"><i data-lucide="grip-vertical" class="w-6 h-6"></i></div>
+            `}
+
+            <!-- 縮小的商品圖片 (w-16 h-16) -->
+            <div class="relative w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+              ${item.image ? `<img src="${item.image}" class="w-full h-full object-cover pointer-events-none" />` : `<div class="w-full h-full flex items-center justify-center text-gray-300"><i data-lucide="image" class="w-6 h-6"></i></div>`}
+              ${isInactive ? `
+                <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <span class="text-white text-[11px] font-bold px-1.5 py-0.5 border border-white rounded text-center leading-tight">
+                    ${item.status === 'inactive-today' ? '今日下架' : (item.stockEnabled && item.currentStock <= 0) ? '已售完' : '已下架'}
+                  </span>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- 商品詳細資訊 -->
+            <div class="flex-grow min-w-0 pointer-events-none">
+              <div class="flex justify-between items-start mb-1">
+                <div class="flex items-center space-x-2 min-w-0">
+                  <h3 class="font-bold text-[15px] text-gray-900 truncate">${item.name}</h3>
+                  ${item.status !== 'active' ? `
+                    <span class="flex-shrink-0 text-[11px] px-1.5 py-0.5 rounded font-bold ${item.status === 'inactive-today' ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'}">
+                      ${item.status === 'inactive-today' ? '停供' : '停售'}
+                    </span>
+                  ` : ''}
+                </div>
+                <span class="text-orange-500 font-bold ml-2 text-[15px]">$${item.price}</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5 mt-1">
+                ${item.tags ? item.tags.slice(0, 2).map(tag => `<span class="text-[13px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded font-medium">${tag}</span>`).join('') : ''}
+                ${item.addonGroupIds ? item.addonGroupIds.map(gId => {
+                  const gp = state.addonGroups.find(g => g.id === gId);
+                  return gp ? `<span class="text-[13px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-medium flex items-center"><i data-lucide="link" class="w-3 h-3 mr-1"></i> ${gp.name}</span>` : '';
+                }).join('') : ''}
+                ${item.remarksEnabled ? `<span class="text-[13px] bg-green-50 text-green-600 px-2 py-0.5 rounded font-medium flex items-center"><i data-lucide="message-square" class="w-3 h-3 mr-1"></i> 備註</span>` : ''}
+              </div>
+            </div>
+
+            <!-- 垂直排列複製與編輯按鈕 -->
+            ${!state.isBatchMode ? `
+              <div class="flex flex-col items-center space-y-2 flex-shrink-0 border-l border-gray-100 pl-3 ml-2">
+                <button onclick="duplicateItem(event, ${item.id})" class="p-1 text-gray-400 hover:text-orange-500 transition-colors"><i data-lucide="copy" class="w-5 h-5"></i></button>
+                <button onclick="openEditItem(event, ${item.id})" class="p-1 text-gray-400 hover:text-blue-500 transition-colors"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    // 2. 加購規格清單渲染
+    function renderAddonGroups(container) {
+      let html = `
+        <div class="bg-orange-50 p-4 rounded-xl flex items-start space-x-3 mb-4">
+          <i data-lucide="layers" class="text-orange-500 mt-1 w-[22px] h-[22px] flex-shrink-0"></i>
+          <p class="text-[13px] text-orange-700 leading-relaxed">長按左側手柄可調整排序。下架規格會以紅色標示，提醒目前不對外提供點餐。</p>
+        </div>
+      `;
+
+      state.addonGroups.forEach((group, idx) => {
+        const isSelected = state.selectedIds.includes(group.id);
+        const cardClass = `bg-white rounded-2xl p-4 shadow-sm border transition-all flex items-center space-x-3 ${isSelected ? 'border-orange-500 bg-orange-50/30' : 'border-gray-100'} ${!isBatchMode ? 'cursor-move active:bg-gray-50' : ''}`;
+
+        html += `
+          <div 
+            class="${cardClass}"
+            draggable="${!state.isBatchMode}"
+            ondragstart="handleDragStart(event, ${idx})"
+            ondragover="handleDragOver(event)"
+            ondragenter="handleDragEnter(${idx})"
+            ondragend="handleDragEnd('addon')"
+            onclick="handleItemClick(event, '${group.id}')"
+          >
+            <!-- 批次選取/拖拉手柄 -->
+            ${state.isBatchMode ? `
+              <div class="w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? 'bg-orange-500 border-orange-500 text-white' : 'border-gray-300'}">
+                ${isSelected ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
+              </div>
+            ` : `
+              <div class="p-1 text-gray-300 flex-shrink-0"><i data-lucide="grip-vertical" class="w-6 h-6"></i></div>
+            `}
+
+            <!-- 內容 -->
+            <div class="flex-grow min-w-0 pointer-events-none">
+              <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center space-x-2 truncate">
+                  <h3 class="font-bold text-[15px] text-gray-900 truncate">${group.name}</h3>
+                  <span class="text-[13px] px-2 py-0.5 rounded-full ${group.selectionMode === 'single' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}">
+                    ${group.selectionMode === 'single' ? '單選' : '複選'}
+                  </span>
+                </div>
+                <!-- 加購品下架圖示與狀態狀態 -->
+                ${group.status !== 'active' ? `
+                  <div class="flex items-center px-2 py-0.5 rounded-full border text-[13px] font-bold ${group.status === 'inactive-today' ? 'bg-blue-50 border-blue-100 text-blue-500' : 'bg-red-50 border-red-100 text-red-500'}">
+                    ${group.status === 'inactive-today' ? '<i data-lucide="calendar-x" class="w-[14px] h-[14px] mr-1"></i>今日下架' : '<i data-lucide="stop-circle" class="w-[14px] h-[14px] mr-1"></i>已下架'}
+                  </div>
+                ` : ''}
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                ${group.options.map(opt => `
+                  <div class="bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg text-[13px] flex items-center">
+                    <span class="text-gray-600">${opt.name}</span>
+                    ${opt.price > 0 ? `<span class="ml-1 text-orange-500">+$$${opt.price}</span>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+
+            ${!state.isBatchMode ? `
+              <div class="flex-shrink-0 border-l border-gray-100 pl-3 ml-2">
+                <button onclick="openEditAddon(event, '${group.id}')" class="p-2 text-gray-400 hover:text-blue-500 transition-colors"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    // 3. 時段菜單列表渲染
+    function renderScheduledMenus(container) {
+      let html = `
+        <div class="bg-orange-50 p-4 rounded-xl flex items-start space-x-3 mb-4">
+          <i data-lucide="calendar" class="text-orange-500 mt-1 w-[22px] h-[22px] flex-shrink-0"></i>
+          <p class="text-[13px] text-orange-700 leading-relaxed">在這裡設定不同時段的菜單清單。顧客僅能在指定時間點購該清單內的商品。</p>
+        </div>
+      `;
+
+      state.scheduledMenus.forEach((menu, idx) => {
+        const isSelected = state.selectedIds.includes(menu.id);
+        const cardClass = `bg-white rounded-2xl p-5 shadow-sm border transition-all flex items-center space-x-4 
+          ${isSelected ? 'border-orange-500 bg-orange-50/30' : 'border-gray-100'} 
+          ${!state.isBatchMode ? 'cursor-move active:bg-gray-50 shadow-md' : ''}`;
+
+        html += `
+          <div 
+            class="${cardClass}"
+            draggable="${!state.isBatchMode}"
+            ondragstart="handleDragStart(event, ${idx})"
+            ondragover="handleDragOver(event)"
+            ondragenter="handleDragEnter(${idx})"
+            ondragend="handleDragEnd('menu')"
+            onclick="handleItemClick(event, '${menu.id}')"
+          >
+            <!-- 批次選取/拖拉手柄 -->
+            ${state.isBatchMode ? `
+              <div class="w-7 h-7 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? 'bg-orange-500 border-orange-500 text-white' : 'border-gray-300'}"></div>
+            ` : `
+              <div class="p-1 text-gray-300 flex-shrink-0"><i data-lucide="grip-vertical" class="w-6 h-6"></i></div>
+            `}
+
+            <!-- 內容 -->
+            <div class="flex-grow min-w-0 pointer-events-none">
+              <div class="flex justify-between items-start mb-1">
+                <h3 class="font-bold text-[15px] text-gray-900 truncate">${menu.name}</h3>
+                ${menu.status !== 'active' ? `
+                  <div class="flex items-center px-2 py-0.5 rounded-full border text-[13px] font-bold ${menu.status === 'inactive-today' ? 'bg-blue-50 border-blue-100 text-blue-500' : 'bg-red-50 border-red-100 text-red-500'}">
+                    ${menu.status === 'inactive-today' ? '<i data-lucide="calendar-x" class="w-[14px] h-[14px] mr-1"></i>今日下架' : '<i data-lucide="slash" class="w-[14px] h-[14px] mr-1"></i>已停用'}
+                  </div>
+                ` : ''}
+              </div>
+              <div class="flex items-center text-[15px] text-gray-500 space-x-5">
+                <div class="flex items-center"><i data-lucide="clock" class="mr-1.5 text-orange-400 w-4 h-4"></i>${menu.startTime} - ${menu.endTime}</div>
+                <div class="flex items-center"><i data-lucide="layout-grid" class="mr-1.5 text-orange-400 w-4 h-4"></i>${menu.itemIds.length} 個商品</div>
+              </div>
+            </div>
+
+            <!-- 時段菜單編輯按鈕 (修復完成，現在可點擊) -->
+            ${!state.isBatchMode ? `
+              <div class="flex-shrink-0 border-l border-gray-100 pl-3 ml-2">
+                <button onclick="openEditMenu(event, '${menu.id}')" class="p-2 text-gray-400 hover:text-blue-500 transition-colors"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    // FAB 按鈕邏輯
+    function renderFAB() {
+      const fab = document.getElementById('global-fab');
+      if (state.isBatchMode) {
+        fab.classList.add('hidden');
+      } else {
+        fab.classList.remove('hidden');
+      }
+    }
+
+    function handleFabClick() {
+      if (state.activeTab === 'main') {
+        openModal();
+      } else if (state.activeTab === 'addon') {
+        openAddonModal();
+      } else if (state.activeTab === 'menu') {
+        openMenuModal();
+      }
+    }
+
+    // --- HTML5 拖拉排序控制 ---
+    function handleDragStart(e, idx) {
+      draggedIndex = idx;
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+    }
+
+    function handleDragEnter(idx) {
+      if (draggedIndex === null || draggedIndex === idx) return;
+      
+      let list = [];
+      if (state.activeTab === 'main') {
+        list = state.items;
+        const draggedItem = list.splice(draggedIndex, 1)[0];
+        list.splice(idx, 0, draggedItem);
+        state.items = list;
+      } else if (state.activeTab === 'addon') {
+        list = state.addonGroups;
+        const draggedItem = list.splice(draggedIndex, 1)[0];
+        list.splice(idx, 0, draggedItem);
+        state.addonGroups = list;
+      } else if (state.activeTab === 'menu') {
+        list = state.scheduledMenus;
+        const draggedItem = list.splice(draggedIndex, 1)[0];
+        list.splice(idx, 0, draggedItem);
+        state.scheduledMenus = list;
+      }
+      
+      draggedIndex = idx;
+      renderList();
+    }
+
+    function handleDragEnd(tab) {
+      draggedIndex = null;
+      renderAll();
+    }
+
+    // --- 批次編輯邏輯 ---
+    function toggleBatchMode(force) {
+      state.isBatchMode = (force !== undefined) ? force : !state.isBatchMode;
+      state.selectedIds = [];
+      
+      const btn = document.getElementById('batch-btn');
+      const text = document.getElementById('batch-btn-text');
+      
+      if (state.isBatchMode) {
+        btn.classList.add('bg-orange-500', 'text-white');
+        btn.classList.remove('bg-orange-50', 'text-orange-500');
+        text.innerText = '取消批次';
+      } else {
+        btn.classList.add('bg-orange-50', 'text-orange-500');
+        btn.classList.remove('bg-orange-500', 'text-white');
+        text.innerText = '批次編輯';
+      }
+
+      // 控制補庫存按鈕顯示
+      const restockBtn = document.getElementById('batch-restock-btn');
+      if (state.activeTab === 'main') {
+        restockBtn.style.opacity = '1';
+        restockBtn.disabled = false;
+      } else {
+        restockBtn.style.opacity = '0.2';
+        restockBtn.disabled = true;
+      }
+
+      renderAll();
+    }
+
+    function handleItemClick(e, id) {
+      if (!state.isBatchMode) return;
+      e.stopPropagation();
+      
+      if (state.selectedIds.includes(id)) {
+        state.selectedIds = state.selectedIds.filter(x => x !== id);
+      } else {
+        state.selectedIds.push(id);
+      }
+      
+      renderAll();
+    }
+
+    function batchSelectAll() {
+      let currentList = [];
+      if (state.activeTab === 'main') {
+        currentList = state.items;
+      } else if (state.activeTab === 'addon') {
+        currentList = state.addonGroups;
+      } else if (state.activeTab === 'menu') {
+        currentList = state.scheduledMenus;
+      }
+
+      if (state.selectedIds.length === currentList.length) {
+        state.selectedIds = [];
+      } else {
+        state.selectedIds = currentList.map(x => x.id);
+      }
+      renderAll();
+    }
+
+    function renderBatchBar() {
+      const bar = document.getElementById('batch-bar');
+      const countText = document.getElementById('batch-count');
+      
+      if (state.isBatchMode && state.selectedIds.length > 0) {
+        bar.classList.remove('hidden');
+        countText.innerText = `已選取 ${state.selectedIds.length} 項`;
+      } else {
+        bar.classList.add('hidden');
+      }
+    }
+
+    function triggerBatchAction(action) {
+      if (state.selectedIds.length === 0) return;
+
+      if (state.activeTab === 'main') {
+        if (action === 'delete') {
+          state.items = state.items.filter(item => !state.selectedIds.includes(item.id));
+        } else if (action === 'active' || action === 'inactive' || action === 'inactive-today') {
+          state.items = state.items.map(item => {
+            if (state.selectedIds.includes(item.id)) {
+              return { ...item, status: action === 'active' ? 'active' : action };
+            }
+            return item;
+          });
+        } else if (action === 'restock') {
+          state.items = state.items.map(item => {
+            if (state.selectedIds.includes(item.id) && item.stockEnabled) {
+              return { ...item, currentStock: item.autoRestock };
+            }
+            return item;
+          });
+        }
+      } else if (state.activeTab === 'addon') {
+        if (action === 'delete') {
+          state.addonGroups = state.addonGroups.filter(g => !state.selectedIds.includes(g.id));
+        } else if (action === 'active' || action === 'inactive' || action === 'inactive-today') {
+          state.addonGroups = state.addonGroups.map(g => {
+            if (state.selectedIds.includes(g.id)) {
+              return { ...g, status: action === 'active' ? 'active' : action };
+            }
+            return g;
+          });
+        }
+      } else if (state.activeTab === 'menu') {
+        if (action === 'delete') {
+          state.scheduledMenus = state.scheduledMenus.filter(m => !state.selectedIds.includes(m.id));
+        } else if (action === 'active' || action === 'inactive' || action === 'inactive-today') {
+          state.scheduledMenus = state.scheduledMenus.map(m => {
+            if (state.selectedIds.includes(m.id)) {
+              return { ...m, status: action === 'active' ? 'active' : action };
+            }
+            return m;
+          });
+        }
+      }
+
+      toggleBatchMode(false);
+    }
+
+    // --- 主商品 複製與新增/編輯 模組邏輯 ---
+    function duplicateItem(e, id) {
+      e.stopPropagation();
+      const origin = state.items.find(x => x.id === id);
+      if (!origin) return;
+
+      const copy = {
+        ...origin,
+        id: Date.now(),
+        name: `${origin.name} (副本)`,
+        status: 'inactive'
+      };
+
+      // 複製出新品項排序在最上方
+      state.items = [copy, ...state.items];
+      renderAll();
+    }
+
+    // 預覽與清空圖片
+    function previewImage(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          state.formData.image = evt.target.result;
+          document.getElementById('item-img-preview').src = evt.target.result;
+          document.getElementById('img-preview-container').classList.remove('hidden');
+          document.getElementById('img-placeholder').classList.add('hidden');
+        }
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function removeImage() {
+      state.formData.image = null;
+      document.getElementById('item-img-preview').src = '';
+      document.getElementById('img-preview-container').classList.add('hidden');
+      document.getElementById('img-placeholder').classList.remove('hidden');
+    }
+
+    // 分類選擇下拉生成
+    function populateCategoryOptions() {
+      const select = document.getElementById('item-category');
+      if (!select) return;
+      select.innerHTML = state.categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+    }
+
+    // 標籤控制
+    function renderItemTags() {
+      const container = document.getElementById('item-tags-container');
+      container.innerHTML = (state.formData.tags || []).map((tag, index) => `
+        <span class="inline-flex items-center bg-orange-50 text-orange-600 px-3 py-1.5 rounded-xl text-[13px] font-medium border border-orange-100">
+          ${tag}
+          <button onclick="removeItemTag(${index})" class="ml-2 p-0.5 hover:bg-orange-200 rounded-full"><i data-lucide="x" class="w-3 h-3"></i></button>
+        </span>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function addTagFromInput() {
+      const input = document.getElementById('tag-input');
+      const value = input.value.trim();
+      if (value && !state.formData.tags.includes(value)) {
+        state.formData.tags.push(value);
+        input.value = '';
+        renderItemTags();
+      }
+    }
+
+    function removeItemTag(index) {
+      state.formData.tags.splice(index, 1);
+      renderItemTags();
+    }
+
+    // 備註與庫存開關控制
+    function toggleItemRemarks() {
+      state.formData.remarksEnabled = !state.formData.remarksEnabled;
+      document.getElementById('btn-remarks-toggle').innerHTML = state.formData.remarksEnabled ? '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>' : '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
+      lucide.createIcons();
+    }
+
+    function toggleItemStock() {
+      state.formData.stockEnabled = !state.formData.stockEnabled;
+      document.getElementById('btn-stock-toggle').innerHTML = state.formData.stockEnabled ? '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>' : '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
+      const fields = document.getElementById('stock-fields');
+      if (state.formData.stockEnabled) {
+        fields.classList.remove('hidden');
+      } else {
+        fields.classList.add('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    // 供應狀態控制 (分段控制項切換)
+    function setItemStatus(status) {
+      state.formData.status = status;
+      ['active', 'inactive', 'inactive-today'].forEach(s => {
+        const btn = document.getElementById(`btn-status-${s}`);
+        if (s === status) {
+          btn.className = "flex-1 py-3 text-[13px] rounded-2xl transition-all bg-white shadow-md font-bold border border-gray-200 " + 
+            (s === 'active' ? 'text-green-600' : s === 'inactive' ? 'text-red-600' : 'text-blue-600');
+        } else {
+          btn.className = "flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500";
+        }
+      });
+    }
+
+    // 規格複選清單
+    function renderAddonSelectionInItem() {
+      const container = document.getElementById('item-addons-list');
+      container.innerHTML = state.addonGroups.map(group => {
+        const checked = state.formData.addonGroupIds.includes(group.id);
+        return `
+          <div onclick="toggleItemAddonLink('${group.id}')" class="flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${checked ? 'bg-orange-50 border-orange-200 text-orange-700 shadow-sm' : 'bg-white border-gray-100 text-gray-500'}">
+            <span class="text-[15px] font-medium">${group.name}</span>
+            <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${checked ? 'bg-orange-500 border-orange-500 text-white' : 'border-gray-200'}">
+              ${checked ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function toggleItemAddonLink(gId) {
+      if (state.formData.addonGroupIds.includes(gId)) {
+        state.formData.addonGroupIds = state.formData.addonGroupIds.filter(id => id !== gId);
+      } else {
+        state.formData.addonGroupIds.push(gId);
+      }
+      renderAddonSelectionInItem();
+    }
+
+    // 開關品項模態
+    function openModal() {
+      state.editingItem = null;
+      state.formData = {
+        name: '', 
+        price: '', 
+        category: state.categories[0] || '未分類', 
+        description: '', 
+        status: 'active', 
+        tags: [], 
+        image: null, 
+        stockEnabled: false, 
+        currentStock: 0, 
+        autoRestock: 0, 
+        addonGroupIds: [], 
+        remarksEnabled: true
+      };
+      
+      document.getElementById('modal-item-title').innerText = '新增品項';
+      document.getElementById('delete-item-btn').classList.add('hidden');
+      
+      // 復原初始 UI 顯示
+      document.getElementById('item-name').value = '';
+      document.getElementById('item-price').value = '';
+      removeImage();
+      populateCategoryOptions();
+      setItemStatus('active');
+      
+      // 備註、庫存重置
+      document.getElementById('btn-remarks-toggle').innerHTML = '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>';
+      document.getElementById('btn-stock-toggle').innerHTML = '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
+      document.getElementById('stock-fields').classList.add('hidden');
+      document.getElementById('item-stock').value = '';
+      document.getElementById('item-restock').value = '';
+      
+      renderItemTags();
+      renderAddonSelectionInItem();
+      
+      document.getElementById('modal-item').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function openEditItem(e, id) {
+      e.stopPropagation();
+      const item = state.items.find(x => x.id === id);
+      if (!item) return;
+
+      state.editingItem = item;
+      state.formData = JSON.parse(JSON.stringify(item));
+
+      document.getElementById('modal-item-title').innerText = '編輯品項';
+      document.getElementById('delete-item-btn').classList.remove('hidden');
+
+      // 載入資料
+      document.getElementById('item-name').value = state.formData.name;
+      document.getElementById('item-price').value = state.formData.price;
+      
+      // 圖片載入
+      if (state.formData.image) {
+        document.getElementById('item-img-preview').src = state.formData.image;
+        document.getElementById('img-preview-container').classList.remove('hidden');
+        document.getElementById('img-placeholder').classList.add('hidden');
+      } else {
+        removeImage();
+      }
+
+      populateCategoryOptions();
+      document.getElementById('item-category').value = state.formData.category;
+      setItemStatus(state.formData.status);
+
+      // 備註與庫存開關
+      document.getElementById('btn-remarks-toggle').innerHTML = state.formData.remarksEnabled ? '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>' : '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
+      document.getElementById('btn-stock-toggle').innerHTML = state.formData.stockEnabled ? '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>' : '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
+      
+      if (state.formData.stockEnabled) {
+        document.getElementById('stock-fields').classList.remove('hidden');
+        document.getElementById('item-stock').value = state.formData.currentStock;
+        document.getElementById('item-restock').value = state.formData.autoRestock;
+      } else {
+        document.getElementById('stock-fields').classList.add('hidden');
+        document.getElementById('item-stock').value = '';
+        document.getElementById('item-restock').value = '';
+      }
+
+      renderItemTags();
+      renderAddonSelectionInItem();
+
+      document.getElementById('modal-item').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeItemModal() {
+      document.getElementById('modal-item').classList.add('hidden');
+    }
+
+    function saveItem() {
+      const name = document.getElementById('item-name').value.trim();
+      const price = parseFloat(document.getElementById('item-price').value);
+      const category = document.getElementById('item-category').value;
+
+      if (!name || isNaN(price)) {
+        alert('請填寫品項名稱與售價');
+        return;
+      }
+
+      state.formData.name = name;
+      state.formData.price = price;
+      state.formData.category = category;
+
+      if (state.formData.stockEnabled) {
+        state.formData.currentStock = parseInt(document.getElementById('item-stock').value) || 0;
+        state.formData.autoRestock = parseInt(document.getElementById('item-restock').value) || 0;
+      }
+
+      if (state.editingItem) {
+        // 更新現有商品
+        state.items = state.items.map(i => i.id === state.editingItem.id ? { ...state.formData } : i);
+      } else {
+        // 新增商品，複製品項排序在最上方
+        state.items = [{ ...state.formData, id: Date.now() }, ...state.items];
+      }
+
+      closeItemModal();
+      renderAll();
+    }
+
+    function deleteCurrentItem() {
+      if (state.editingItem) {
+        deleteItem(state.editingItem.id);
+        closeItemModal();
+      }
+    }
+
+    function deleteItem(id) {
+      state.items = state.items.filter(i => i.id !== id);
+      renderAll();
+    }
+
+    // --- 加購品規格 模組邏輯 (新增選項置頂) ---
+    function setAddonGroupStatus(status) {
+      state.addonFormData.status = status;
+      ['active', 'inactive', 'inactive-today'].forEach(s => {
+        const btn = document.getElementById(`btn-addon-status-${s}`);
+        if (s === status) {
+          btn.className = "flex-1 py-3 text-[13px] rounded-2xl transition-all bg-white shadow-md font-bold border border-gray-200 " + 
+            (s === 'active' ? 'text-green-600' : s === 'inactive' ? 'text-red-600' : 'text-blue-600');
+        } else {
+          btn.className = "flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500";
+        }
+      });
+    }
+
+    // 設定單選/複選
+    function setAddonSelectionMode(mode) {
+      state.addonFormData.selectionMode = mode;
+      ['single', 'multiple'].forEach(m => {
+        const btn = document.getElementById(`btn-addon-mode-${m}`);
+        if (m === mode) {
+          btn.className = `flex-1 py-2 text-[13px] rounded-xl transition-all bg-white shadow-sm font-bold ${m === 'single' ? 'text-blue-600' : 'text-purple-600'}`;
+        } else {
+          btn.className = "flex-1 py-2 text-[13px] rounded-xl transition-all text-gray-500";
+        }
+      });
+    }
+
+    // 規格選項清單渲染
+    function renderAddonFormOptions() {
+      const container = document.getElementById('addon-options-list');
+      container.innerHTML = state.addonFormData.options.map((opt, idx) => `
+        <div class="bg-white border border-gray-100 p-5 rounded-[2.5rem] shadow-sm space-y-4 relative">
+          <button onclick="removeAddonOption('${opt.id}')" class="absolute top-4 right-4 text-gray-300 hover:text-red-500"><i data-lucide="x" class="w-5 h-5"></i></button>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-[13px] font-bold text-gray-400 ml-1">選項名稱</label>
+              <input type="text" placeholder="去冰" onchange="updateAddonOption('${opt.id}', 'name', this.value)" value="${opt.name}" class="w-full bg-gray-50 border-none rounded-2xl px-4 py-3.5 text-[15px] font-bold outline-none focus:ring-1 focus:ring-orange-500" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-[13px] font-bold text-gray-400 ml-1">加價金額</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-[13px] font-bold">$</span>
+                <input type="number" placeholder="0" onchange="updateAddonOption('${opt.id}', 'price', this.value)" value="${opt.price}" class="w-full bg-gray-50 border-none rounded-2xl pl-8 pr-4 py-3.5 text-[15px] font-bold outline-none focus:ring-1 focus:ring-orange-500" />
+              </div>
+            </div>
+          </div>
+          
+          <!-- 觸發子規格複選標籤按鈕 -->
+          <div>
+            <label class="block text-[13px] font-bold text-gray-400 mb-3 ml-1 flex items-center">
+              <i data-lucide="external-link" class="w-4 h-4 mr-1"></i> 觸發子規格設定
+            </label>
+            <div class="flex flex-wrap gap-2">
+              ${state.addonGroups.filter(g => g.id !== state.addonFormData.id).map(g => {
+                const active = (opt.subGroupIds || []).includes(g.id);
+                return `
+                  <button 
+                    type="button" 
+                    onclick="toggleSubGroupInAddonOption('${opt.id}', '${g.id}')" 
+                    class="px-4 py-2 rounded-2xl text-[13px] border transition-all ${active ? 'bg-blue-50 border-blue-200 text-blue-600 font-bold shadow-sm' : 'bg-white border-gray-200 text-gray-400'}"
+                  >
+                    ${g.name}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    // 選項置頂新增邏輯 (將新選項放在陣列最前方)
+    function addAddonOption() {
+      const newItem = { id: 'opt_' + Date.now(), name: '', price: 0, subGroupIds: [] };
+      state.addonFormData.options = [newItem, ...state.addonFormData.options];
+      renderAddonFormOptions();
+    }
+
+    function removeAddonOption(id) {
+      state.addonFormData.options = state.addonFormData.options.filter(o => o.id !== id);
+      renderAddonFormOptions();
+    }
+
+    function updateAddonOption(id, field, value) {
+      state.addonFormData.options = state.addonFormData.options.map(opt => {
+        if (opt.id === id) {
+          return { ...opt, [field]: field === 'price' ? (parseInt(value) || 0) : value };
+        }
+        return opt;
+      });
+    }
+
+    function toggleSubGroupInAddonOption(optId, gId) {
+      state.addonFormData.options = state.addonFormData.options.map(opt => {
+        if (opt.id === optId) {
+          const subGroupIds = opt.subGroupIds || [];
+          const newSubGroupIds = subGroupIds.includes(gId)
+            ? subGroupIds.filter(id => id !== gId)
+            : [...subGroupIds, gId];
+          return { ...opt, subGroupIds: newSubGroupIds };
+        }
+        return opt;
+      });
+      renderAddonFormOptions();
+    }
+
+    function openAddonModal(group = null) {
+      if (group) {
+        state.addonFormData = JSON.parse(JSON.stringify(group));
+        document.getElementById('modal-addon-title').innerText = '編輯規格組';
+        document.getElementById('delete-addon-group-btn').classList.remove('hidden');
+      } else {
+        state.addonFormData = { 
+          id: 'g' + Date.now().toString(), 
+          name: '', 
+          status: 'active', 
+          selectionMode: 'single', 
+          options: [{ id: 'opt_' + Date.now(), name: '', price: 0, subGroupIds: [] }] 
+        };
+        document.getElementById('modal-addon-title').innerText = '新增規格組';
+        document.getElementById('delete-addon-group-btn').classList.add('hidden');
+      }
+
+      document.getElementById('addon-group-name').value = state.addonFormData.name;
+      setAddonGroupStatus(state.addonFormData.status);
+      setAddonSelectionMode(state.addonFormData.selectionMode);
+      renderAddonFormOptions();
+
+      document.getElementById('modal-addon').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeAddonModal() {
+      document.getElementById('modal-addon').classList.add('hidden');
+    }
+
+    function saveAddonGroup() {
+      const name = document.getElementById('addon-group-name').value.trim();
+      if (!name) {
+        alert('請輸入規格組名稱');
+        return;
+      }
+
+      state.addonFormData.name = name;
+
+      const existingIndex = state.addonGroups.findIndex(g => g.id === state.addonFormData.id);
+      if (existingIndex > -1) {
+        state.addonGroups[existingIndex] = { ...state.addonFormData };
+      } else {
+        // 新規格組排序在最上方
+        state.addonGroups = [{ ...state.addonFormData }, ...state.addonGroups];
+      }
+
+      closeAddonModal();
+      renderAll();
+    }
+
+    function deleteCurrentAddonGroup() {
+      if (state.addonFormData && state.addonFormData.id) {
+        deleteAddonGroup(state.addonFormData.id);
+        closeAddonModal();
+      }
+    }
+
+    function deleteAddonGroup(id) {
+      state.addonGroups = state.addonGroups.filter(g => g.id !== id);
+      renderAll();
+    }
+
+    function openEditAddon(e, id) {
+      e.stopPropagation();
+      const group = state.addonGroups.find(g => g.id === id);
+      if (group) {
+        openAddonModal(group);
+      }
+    }
+
+
+    // --- 時段菜單 模組邏輯 ---
+    function setMenuStatus(status) {
+      state.menuFormData.status = status;
+      ['active', 'inactive', 'inactive-today'].forEach(s => {
+        const btn = document.getElementById(`btn-menu-status-${s}`);
+        if (s === status) {
+          btn.className = "flex-1 py-3 text-[13px] rounded-2xl transition-all bg-white shadow-md font-bold border border-gray-200 " + 
+            (s === 'active' ? 'text-green-600' : s === 'inactive' ? 'text-red-500' : 'text-blue-500');
+        } else {
+          btn.className = "flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500";
+        }
+      });
+    }
+
+    function renderMenuItemsSelectList() {
+      const container = document.getElementById('menu-items-select-list');
+      // 純淨清單：過濾僅顯示 type: 'main'
+      const mainItems = state.items.filter(i => i.type === 'main');
+      
+      container.innerHTML = mainItems.map(item => {
+        const checked = state.menuFormData.itemIds.includes(item.id);
+        return `
+          <div onclick="toggleItemInMenuSelect(${item.id})" class="flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${checked ? 'bg-orange-50 border-orange-200 text-orange-700 shadow-sm' : 'bg-white border-gray-100 text-gray-500'}">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                ${item.image ? `<img src="${item.image}" class="w-full h-full object-cover" />` : `<div class="w-full h-full flex items-center justify-center text-gray-300"><i data-lucide="image" class="w-5 h-5"></i></div>`}
+              </div>
+              <span class="text-[15px] font-medium">${item.name}</span>
+            </div>
+            <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${checked ? 'bg-orange-500 border-orange-500 text-white' : 'border-gray-200'}">
+              ${checked ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function toggleItemInMenuSelect(itemId) {
+      if (state.menuFormData.itemIds.includes(itemId)) {
+        state.menuFormData.itemIds = state.menuFormData.itemIds.filter(id => id !== itemId);
+      } else {
+        state.menuFormData.itemIds.push(itemId);
+      }
+      renderMenuItemsSelectList();
+    }
+
+    function openMenuModal(menu = null) {
+      if (menu) {
+        state.menuFormData = JSON.parse(JSON.stringify(menu));
+        document.getElementById('modal-menu-title').innerText = '編輯時段菜單';
+        document.getElementById('delete-menu-btn').classList.remove('hidden');
+      } else {
+        state.menuFormData = { id: 'm' + Date.now(), name: '', startTime: '09:00', endTime: '18:00', itemIds: [], status: 'active' };
+        document.getElementById('modal-menu-title').innerText = '新增時段菜單';
+        document.getElementById('delete-menu-btn').classList.add('hidden');
+      }
+
+      document.getElementById('menu-name').value = state.menuFormData.name;
+      document.getElementById('menu-start').value = state.menuFormData.startTime;
+      document.getElementById('menu-end').value = state.menuFormData.endTime;
+      setMenuStatus(state.menuFormData.status);
+      renderMenuItemsSelectList();
+
+      document.getElementById('modal-menu').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeMenuModal() {
+      document.getElementById('modal-menu').classList.add('hidden');
+    }
+
+    function saveScheduledMenu() {
+      const name = document.getElementById('menu-name').value.trim();
+      const start = document.getElementById('menu-start').value;
+      const end = document.getElementById('menu-end').value;
+
+      if (!name || !start || !end) {
+        alert('請填寫完整時段菜單資訊');
+        return;
+      }
+
+      state.menuFormData.name = name;
+      state.menuFormData.startTime = start;
+      state.menuFormData.endTime = end;
+
+      const existingIndex = state.scheduledMenus.findIndex(m => m.id === state.menuFormData.id);
+      if (existingIndex > -1) {
+        state.scheduledMenus[existingIndex] = { ...state.menuFormData };
+      } else {
+        state.scheduledMenus = [{ ...state.menuFormData }, ...state.scheduledMenus];
+      }
+
+      closeMenuModal();
+      renderAll();
+    }
+
+    function deleteCurrentMenu() {
+      if (state.menuFormData && state.menuFormData.id) {
+        state.scheduledMenus = state.scheduledMenus.filter(m => m.id !== state.menuFormData.id);
+        closeMenuModal();
+        renderAll();
+      }
+    }
+
+    function openEditMenu(e, id) {
+      e.stopPropagation();
+      const menu = state.scheduledMenus.find(m => m.id === id);
+      if (menu) {
+        openMenuModal(menu);
+      }
+    }
+
+
+    // --- 商店設定 模組邏輯 (結帳加購品與全域備註) ---
+    function openStoreSettings() {
+      document.getElementById('btn-global-remarks-toggle').innerHTML = state.storeSettings.globalRemarksEnabled ? '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>' : '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
+      renderCheckoutAddons();
+      document.getElementById('modal-store-settings').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeStoreSettings() {
+      document.getElementById('modal-store-settings').classList.add('hidden');
+    }
+
+    function toggleGlobalRemarks() {
+      state.storeSettings.globalRemarksEnabled = !state.storeSettings.globalRemarksEnabled;
+      document.getElementById('btn-global-remarks-toggle').innerHTML = state.storeSettings.globalRemarksEnabled ? '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>' : '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
+      lucide.createIcons();
+    }
+
+    function renderCheckoutAddons() {
+      const container = document.getElementById('checkout-addons-list');
+      container.innerHTML = state.storeSettings.checkoutAddons.map(addon => `
+        <div class="bg-white border border-gray-100 p-5 rounded-[2.5rem] shadow-sm space-y-4">
+          <div class="flex items-center space-x-3">
+            <input type="text" onchange="updateCheckoutAddonValue('${addon.id}', 'name', this.value)" class="flex-grow bg-gray-50 border-none rounded-xl px-4 py-3 text-[15px] font-bold outline-none" value="${addon.name}" />
+            <button onclick="removeCheckoutAddon('${addon.id}')" class="p-2.5 text-gray-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2 bg-gray-50 rounded-2xl px-4 py-2.5">
+              <span class="text-[13px] text-gray-400 font-bold">NT$</span>
+              <input type="number" onchange="updateCheckoutAddonValue('${addon.id}', 'price', this.value)" class="w-20 bg-transparent border-none p-0 text-[15px] font-bold outline-none" value="${addon.price}" />
+            </div>
+            <div class="flex bg-gray-100 p-1.5 rounded-2xl">
+              <button onclick="updateCheckoutAddonValue('${addon.id}', 'status', 'active')" class="px-5 py-2 text-[13px] rounded-xl transition-all ${addon.status === 'active' ? 'bg-white text-green-600 shadow-sm font-bold' : 'text-gray-400'}">上架</button>
+              <button onclick="updateCheckoutAddonValue('${addon.id}', 'status', 'inactive')" class="px-5 py-2 text-[13px] rounded-xl transition-all ${addon.status === 'inactive' ? 'bg-white text-red-600 shadow-sm font-bold' : 'text-gray-400'}">下架</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function addNewCheckoutAddon() {
+      const newItem = { id: 'ca_' + Date.now(), name: '新加購品', price: 0, status: 'active' };
+      state.storeSettings.checkoutAddons = [newItem, ...state.storeSettings.checkoutAddons];
+      renderCheckoutAddons();
+    }
+
+    // 刪除結帳加購品
+    function removeCheckoutAddon(id) {
+      state.storeSettings.checkoutAddons = state.storeSettings.checkoutAddons.filter(x => x.id !== id);
+      renderCheckoutAddons();
+    }
+
+    function updateCheckoutAddonValue(id, field, value) {
+      state.storeSettings.checkoutAddons = state.storeSettings.checkoutAddons.map(addon => {
+        if (addon.id === id) {
+          return { ...addon, [field]: field === 'price' ? (parseInt(value) || 0) : value };
+        }
+        return addon;
+      });
+      if (field === 'status') renderCheckoutAddons();
+    }
+
+
+    // --- 商品分類管理 模組邏輯 ---
+    function openCategoryModal() {
+      renderCategoryModalList();
+      document.getElementById('modal-category').classList.remove('hidden');
+    }
+
+    function closeCategoryModal() {
+      document.getElementById('modal-category').classList.add('hidden');
+      populateCategoryOptions(); // 確保主商品編輯彈窗內的下拉選單同步更新
+    }
+
+    function renderCategoryModalList() {
+      const container = document.getElementById('categories-list-container');
+      container.innerHTML = state.categories.map((cat, idx) => `
+        <div 
+          class="flex justify-between items-center p-5 border border-gray-100 rounded-[2rem] shadow-sm bg-white"
+          draggable="true"
+          ondragstart="handleCategoryDragStart(event, ${idx})"
+          ondragover="handleCategoryDragOver(event)"
+          ondragenter="handleCategoryDragEnter(${idx})"
+          ondragend="handleCategoryDragEnd()"
+        >
+          <div class="flex items-center space-x-4">
+            <div class="text-gray-300 cursor-move"><i data-lucide="grip-vertical" class="w-6 h-6"></i></div>
+            <span class="text-[15px] font-bold">${cat}</span>
+          </div>
+          <button onclick="deleteCategory('${cat}')" class="text-red-400 p-3 hover:bg-red-50 rounded-full transition-colors">
+            <i data-lucide="trash-2" class="w-[22px] h-[22px]"></i>
+          </button>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function addCategory() {
+      const input = document.getElementById('new-category-input');
+      const value = input.value.trim();
+      if (value && !state.categories.includes(value)) {
+        state.categories.push(value);
+        input.value = '';
+        renderCategoryModalList();
+        renderCategoryCapsules();
+        lucide.createIcons();
+      }
+    }
+
+    function deleteCategory(cat) {
+      state.categories = state.categories.filter(c => c !== cat);
+      // 當刪除分類時，原屬於該分類的商品會自動歸類至「未分類」，確保資料不會出錯。
+      state.items = state.items.map(item => {
+        if (item.category === cat) {
+          return { ...item, category: '未分類' };
+        }
+        return item;
+      });
+      if (!state.categories.includes('未分類')) {
+        state.categories.push('未分類');
+      }
+      renderCategoryModalList();
+      renderCategoryCapsules();
+      renderList();
+      lucide.createIcons();
+    }
+
+    // 分類管理拖拉邏輯
+    let draggedCatIndex = null;
+    function handleCategoryDragStart(e, idx) {
+      draggedCatIndex = idx;
+    }
+    function handleCategoryDragOver(e) {
+      e.preventDefault();
+    }
+    function handleCategoryDragEnter(idx) {
+      if (draggedCatIndex === null || draggedCatIndex === idx) return;
+      const list = [...state.categories];
+      const draggedItem = list.splice(draggedCatIndex, 1)[0];
+      list.splice(idx, 0, draggedItem);
+      state.categories = list;
+      draggedCatIndex = idx;
+      renderCategoryModalList();
+    }
+    function handleCategoryDragEnd() {
+      draggedCatIndex = null;
+      renderCategoryCapsules();
+      renderList();
+      lucide.createIcons();
+    }
+
+  </script>
+</body>
+</html>
