@@ -44,10 +44,19 @@
     
     <!-- 頂部導航與分頁 -->
     <header class="bg-white border-b border-gray-100 sticky top-0 z-10">
-      <!-- 由左而右順序: 設定icon -> 批次編輯 -> 大頭貼/登入 (右側) -->
-      <div class="px-4 pt-4 pb-3 flex justify-between items-center">
+      <!-- 1. 新增店名 "北方牛肉麵" 窄高 Topbar -->
+      <div class="bg-gray-50 border-b border-gray-100 px-4 py-1.5 flex justify-between items-center text-[12px] text-gray-500 font-medium select-none">
+        <div class="flex items-center space-x-1">
+          <i data-lucide="store" class="w-3.5 h-3.5 text-orange-500"></i>
+          <span class="font-bold text-gray-700">北方牛肉麵</span>
+        </div>
+        <span class="text-gray-400 text-[11px]">後台管理系統</span>
+      </div>
+
+      <!-- 2. 由左而右順序: 設定icon -> 批次編輯 -> 大頭貼/登入 (右側) -->
+      <div class="px-4 pt-3.5 pb-3 flex justify-between items-center">
         <div class="flex items-center space-x-2.5">
-          <!-- 設定icon -->
+          <!-- 2-1. 設定icon -->
           <button 
             onclick="openStoreSettings()"
             class="p-2.5 bg-gray-50 text-gray-400 rounded-full hover:bg-orange-50 hover:text-orange-500 transition-all shadow-sm active:scale-95"
@@ -55,7 +64,7 @@
             <i data-lucide="settings" class="w-[20px] h-[20px]"></i>
           </button>
 
-          <!-- 批次編輯 -->
+          <!-- 2-2. 批次編輯 -->
           <button 
             onclick="toggleBatchMode()"
             id="batch-btn"
@@ -66,15 +75,15 @@
           </button>
         </div>
 
-        <!-- 大頭貼/立即登入 (位於 header 右邊) -->
+        <!-- 2-3 / 5. 大頭貼/立即登入 (位於 header 右邊，極簡圓形大頭貼，不加黑色背景色) -->
         <div id="header-auth-area" class="flex items-center">
-          <!-- 動態載入：頭像名稱膠囊 或 立即登入按鈕 -->
+          <!-- 動態載入：頭像 或 立即登入按鈕 -->
         </div>
       </div>
 
       <!-- Tab 切換 -->
       <div class="flex px-4 border-b border-gray-50">
-        <!-- 頁面中的 "主商品" 均改成 菜單管理 -->
+        <!-- 5. 頁面中的 "主商品" 均改成 菜單管理 -->
         <button onclick="switchTab('main')" id="tab-main" class="flex-1 py-3 text-[15px] font-bold border-b-2 text-center transition-all border-orange-500 text-orange-500">菜單管理</button>
         <button onclick="switchTab('addon')" id="tab-addon" class="flex-1 py-3 text-[15px] font-bold border-b-2 text-center transition-all border-transparent text-gray-400">加購品規格</button>
         <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-3 text-[15px] font-bold border-b-2 text-center transition-all border-transparent text-gray-400">時段菜單</button>
@@ -157,11 +166,11 @@
     <div id="modal-profile" class="fixed inset-0 bg-white z-[90] flex flex-col hidden overflow-y-auto">
       <div class="px-4 py-5 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 shadow-sm z-10">
         <button onclick="closeProfileModal()" class="p-1 text-gray-600"><i data-lucide="arrow-left" class="w-7 h-7"></i></button>
-        <h2 class="text-[20px] font-bold">會員個人資料</h2>
+        <h2 class="text-[20px] font-bold" id="profile-modal-title">使用者資訊</h2>
         <div class="w-8"></div>
       </div>
       
-      <!-- 動態渲染會員資料或登入介面，登入/登出按鈕皆放在此頁最下方 -->
+      <!-- 6. 動態渲染會員資料或登入介面，登入/登出按鈕皆放在此頁最下方 -->
       <div class="p-6 space-y-6 max-w-md mx-auto w-full flex-grow flex flex-col justify-between" id="profile-content-container">
         <!-- 會由 renderAuthUI() 即時反應使用者登入狀態並與 Supabase 進行同步讀寫 -->
       </div>
@@ -484,7 +493,7 @@
       isBatchMode: false,
       selectedIds: [],
       
-      // Supabase Auth & DB 儲存狀態 (新增)
+      // Supabase Auth & DB 儲存狀態
       user: null,         // 存放 Supabase Auth 認證數據
       userProfile: null,  // 存放您自訂資料表中同步下來的最新會員欄位數據
 
@@ -718,25 +727,24 @@
           });
         }
 
-        // Header 右側：大頭貼與暱稱膠囊
+        // 2-3 / 5. Header 右側：大頭貼 (極簡顯示頭像就好，不加黑色背景凸顯，不加暱稱)
         headerAuthArea.innerHTML = `
-          <div onclick="handleHeaderClick()" class="flex items-center space-x-2 bg-gray-900 text-white pl-2 pr-3.5 py-1.5 rounded-full cursor-pointer hover:bg-gray-800 active:scale-95 transition-all shadow-md">
-            <img src="${avatarUrl}" class="w-6 h-6 rounded-full object-cover border border-gray-700 shadow-sm" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop'" />
-            <span class="font-bold text-[13px] text-gray-200 max-w-[80px] truncate">${fullName}</span>
+          <div onclick="handleHeaderClick()" class="cursor-pointer active:scale-90 transition-all select-none">
+            <img src="${avatarUrl}" class="w-9 h-9 rounded-full object-cover border border-gray-200/80 shadow-sm" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop'" />
           </div>
         `;
 
-        // 會員資料頁內容 (已登入)
+        // 6. 會員資料頁內容 (已登入)
         profileContainer.innerHTML = `
           <div class="space-y-6">
-            <!-- 頭像 / 名稱 / 會員層級對應中文字 -->
-            <div class="text-center py-6 space-y-3 bg-gray-50 rounded-3xl border border-gray-100 p-4 shadow-inner">
-              <img src="${avatarUrl}" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white shadow-lg" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop'" />
+            <!-- 6-2. 頭像/名稱區：直接沿用白色背景，無 card 灰色底及陰影 -->
+            <div class="text-center py-6 space-y-3 bg-white border-b border-gray-100">
+              <img src="${avatarUrl}" class="w-24 h-24 rounded-full mx-auto object-cover border border-gray-200/50 shadow-sm" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop'" />
               <h3 class="text-[20px] font-bold text-gray-900">${fullName}</h3>
               <span class="inline-block ${levelBadgeClass} text-[13px] px-4 py-1 rounded-full font-bold">${levelText}</span>
             </div>
 
-            <!-- 詳細資料表格 (顯示自訂資料表的即時數值) -->
+            <!-- 詳細資料表格 (6-3. 移除系統權限等級那列) -->
             <div class="bg-white rounded-3xl border border-gray-100 divide-y divide-gray-100 overflow-hidden shadow-sm">
               <div class="p-4 flex justify-between items-center text-[15px]">
                 <span class="text-gray-400 font-medium">電子信箱</span>
@@ -746,45 +754,38 @@
                 <span class="text-gray-400 font-medium">加入時間</span>
                 <span class="text-gray-800 font-bold">${joinedDateStr}</span>
               </div>
-              <div class="p-4 flex justify-between items-center text-[15px]">
-                <span class="text-gray-400 font-medium">系統權限等級</span>
-                <span class="text-gray-800 font-bold">${levelText} (等級 ${levelNum})</span>
-              </div>
             </div>
           </div>
 
-          <!-- 登出按鈕：安全放置在會員資料頁最下方 -->
+          <!-- 6-4. 置底按鈕 "登出系統" 改成 "登出" -->
           <button onclick="handleLogoutFromProfile()" class="w-full py-4 bg-red-50 text-red-500 hover:bg-red-100 active:scale-95 transition-all text-[15px] font-bold rounded-2xl flex items-center justify-center space-x-2 border border-red-100">
             <i data-lucide="log-out" class="w-5 h-5"></i>
-            <span>登出系統</span>
+            <span>登出</span>
           </button>
         `;
       } else {
         // 未登入狀態 (不強制蓋板，直接於 header 的右側顯示「立即登入」)
+        // 2. "立即登入"按鈕的陰影改小 (由 shadow-md/shadow-lg 改為 shadow-sm)
         headerAuthArea.innerHTML = `
-          <button onclick="handleHeaderClick()" class="bg-orange-500 text-white px-3.5 py-2 rounded-full text-[13px] font-bold shadow-md hover:bg-orange-600 active:scale-95 transition-all flex items-center space-x-1">
+          <button onclick="handleHeaderClick()" class="bg-orange-500 text-white px-3.5 py-2.5 rounded-full text-[13px] font-bold shadow-sm hover:bg-orange-600 active:scale-95 transition-all flex items-center space-x-1">
             <i data-lucide="log-in" class="w-4 h-4"></i>
             <span>立即登入</span>
           </button>
         `;
 
-        // 登入引導內容與登入按鈕 (當訪客點擊立即登入後，在會員個人資料頁下方顯示登入按鈕)
+        // 3. 登入引導內容與登入按鈕 (3. 改回原本高質感黑底/深色背景引導登入 - 對齊 image_313101.png)
         profileContainer.innerHTML = `
-          <div class="space-y-6 flex-grow flex flex-col justify-center">
-            <div class="text-center py-8 space-y-4 bg-gray-50 rounded-3xl border border-gray-100 p-6 shadow-inner my-auto">
-              <div class="w-20 h-20 bg-orange-500 rounded-[2rem] mx-auto flex items-center justify-center shadow-2xl shadow-orange-500/30">
+          <div class="space-y-6 flex-grow flex flex-col justify-center select-none">
+            <!-- 3. 黑底圓角引導卡片 (對齊 image_313101.png) -->
+            <div class="bg-gray-900 border border-gray-800 rounded-[2rem] p-8 text-center space-y-6 shadow-2xl">
+              <div class="w-20 h-20 bg-orange-500 rounded-full mx-auto flex items-center justify-center shadow-lg shadow-orange-500/30">
                 <i data-lucide="store" class="text-white w-10 h-10"></i>
               </div>
-              <div class="space-y-2">
-                <h3 class="text-[20px] font-bold text-gray-900">歡迎使用菜單管理系統</h3>
-                <p class="text-gray-500 text-[13px] leading-relaxed max-w-xs mx-auto">請登入 Google 帳號以啟用完整的菜單管理、加購規格及全域收銀功能。</p>
-              </div>
+              <h3 class="text-[20px] font-bold text-white tracking-wide">歡迎使用菜單管理系統</h3>
             </div>
-          </div>
 
-          <!-- 登入引導按鈕放置在下方 -->
-          <div class="space-y-3">
-            <button onclick="handleGoogleLogin()" class="w-full flex items-center justify-center bg-white border border-gray-200 text-gray-700 font-bold py-4 px-4 rounded-2xl shadow-lg hover:bg-gray-50 active:scale-95 transition-all text-[15px] space-x-3">
+            <!-- 下方 Google 登入按鈕 -->
+            <button onclick="handleGoogleLogin()" class="w-full flex items-center justify-center bg-white text-gray-800 font-bold py-4 px-4 rounded-full shadow-md hover:bg-gray-50 active:scale-95 transition-all text-[15px] space-x-3 mt-4 border border-gray-200">
               <svg class="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.67 1.39 7.56l3.89 3.02C6.24 7.6 8.88 5.04 12 5.04z"/>
                 <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.51h6.46c-.29 1.48-1.14 2.73-2.4 3.58l3.73 2.89c2.18-2.01 3.7-4.97 3.7-8.62z"/>
@@ -793,9 +794,10 @@
               </svg>
               <span>使用 Google 帳戶安全登入</span>
             </button>
-            <div class="text-center">
-              <p class="text-gray-400 text-[11px] tracking-wider uppercase">Secured by Supabase Authentication</p>
-            </div>
+          </div>
+
+          <div class="text-center pt-2">
+            <p class="text-gray-600 text-[10px] tracking-wider uppercase select-none">Secured by Supabase Authentication</p>
           </div>
         `;
       }
@@ -809,7 +811,32 @@
 
     // 會員資料頁面開關控制
     function openProfileModal() {
-      document.getElementById('modal-profile').classList.remove('hidden');
+      const modalProfile = document.getElementById('modal-profile');
+      const modalHeader = modalProfile.querySelector('.sticky');
+      const backBtn = modalProfile.querySelector('button');
+      const title = document.getElementById('profile-modal-title');
+      
+      if (state.user) {
+        // 已登入：平鋪白底風格
+        modalProfile.className = "fixed inset-0 bg-white z-[90] flex flex-col hidden overflow-y-auto text-gray-800 animate-in";
+        if (modalHeader) modalHeader.className = "px-4 py-5 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 shadow-sm z-10";
+        if (backBtn) backBtn.className = "p-1 text-gray-600 active:scale-90 transition-transform";
+        if (title) {
+          title.className = "text-[20px] font-bold text-gray-900";
+          title.innerText = "使用者資訊"; // 6-1. 標題改成 "使用者資訊"
+        }
+      } else {
+        // 未登入：黑底引導樣式 (對齊 image_313101.png)
+        modalProfile.className = "fixed inset-0 bg-gray-950 z-[90] flex flex-col hidden overflow-y-auto text-white animate-in";
+        if (modalHeader) modalHeader.className = "px-4 py-5 flex items-center justify-between border-b border-gray-900 bg-gray-950 sticky top-0 shadow-sm z-10";
+        if (backBtn) backBtn.className = "p-1 text-gray-300 hover:text-white active:scale-90 transition-transform";
+        if (title) {
+          title.className = "text-[20px] font-bold text-white";
+          title.innerText = "請登入系統"; // 對齊 image_313101.png
+        }
+      }
+      
+      modalProfile.classList.remove('hidden');
       lucide.createIcons();
     }
 
@@ -865,27 +892,40 @@
     // --- TAB 切換邏輯 ---
     function switchTab(tab) {
       state.activeTab = tab;
+      
+      // 4. Bug 修正：開啟批次編輯後切換選單，應該要自動取消批次，恢復常規狀態
       state.isBatchMode = false;
       state.selectedIds = [];
+      const btn = document.getElementById('batch-btn');
+      const text = document.getElementById('batch-btn-text');
+      if (btn && text) {
+        btn.classList.add('bg-orange-50', 'text-orange-500');
+        btn.classList.remove('bg-orange-500', 'text-white');
+        text.innerText = '批次編輯';
+      }
       
       // 更新 Tab 按鈕樣式
       ['main', 'addon', 'menu'].forEach(t => {
-        const btn = document.getElementById(`tab-${t}`);
-        if (t === tab) {
-          btn.classList.add('border-orange-500', 'text-orange-500');
-          btn.classList.remove('border-transparent', 'text-gray-400');
-        } else {
-          btn.classList.remove('border-orange-500', 'text-orange-500');
-          btn.classList.add('border-transparent', 'text-gray-400');
+        const tabBtn = document.getElementById(`tab-${t}`);
+        if (tabBtn) {
+          if (t === tab) {
+            tabBtn.classList.add('border-orange-500', 'text-orange-500');
+            tabBtn.classList.remove('border-transparent', 'text-gray-400');
+          } else {
+            tabBtn.classList.remove('border-orange-500', 'text-orange-500');
+            tabBtn.classList.add('border-transparent', 'text-gray-400');
+          }
         }
       });
 
       // 搜尋分類控制列顯示
       const bar = document.getElementById('search-category-bar');
-      if (tab === 'main') {
-        bar.classList.remove('hidden');
-      } else {
-        bar.classList.add('hidden');
+      if (bar) {
+        if (tab === 'main') {
+          bar.classList.remove('hidden');
+        } else {
+          bar.classList.add('hidden');
+        }
       }
 
       renderAll();
@@ -1154,7 +1194,7 @@
               </div>
             </div>
 
-            <!-- 時段菜單編輯按鈕 (修復完成) -->
+            <!-- 時段菜單編輯按鈕 -->
             ${!state.isBatchMode ? `
               <div class="flex-shrink-0 border-l border-gray-100 pl-3 ml-2">
                 <button onclick="openEditMenu(event, '${menu.id}')" class="p-2 text-gray-400 hover:text-blue-500 transition-colors"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
@@ -1191,10 +1231,12 @@
       draggedIndex = idx;
     }
 
+    // 拖動過渡監聽
     function handleDragOver(e) {
       e.preventDefault();
     }
 
+    // 拖動位置比對交換
     function handleDragEnter(idx) {
       if (draggedIndex === null || draggedIndex === idx) return;
       
@@ -1321,11 +1363,15 @@
 
       const restockBtn = document.getElementById('batch-restock-btn');
       if (state.activeTab === 'main') {
-        restockBtn.style.opacity = '1';
-        restockBtn.disabled = false;
+        if (restockBtn) {
+          restockBtn.style.opacity = '1';
+          restockBtn.disabled = false;
+        }
       } else {
-        restockBtn.style.opacity = '0.2';
-        restockBtn.disabled = true;
+        if (restockBtn) {
+          restockBtn.style.opacity = '0.2';
+          restockBtn.disabled = true;
+        }
       }
 
       renderAll();
@@ -1929,6 +1975,7 @@
       document.getElementById('modal-menu').classList.add('hidden');
     }
 
+    // 儲存時段菜單
     function saveScheduledMenu() {
       const name = document.getElementById('menu-name').value.trim();
       const start = document.getElementById('menu-start').value;
@@ -1983,7 +2030,6 @@
       document.getElementById('modal-store-settings').classList.add('hidden');
     }
 
-    // 切換全域顧客備註
     function toggleGlobalRemarks() {
       state.storeSettings.globalRemarksEnabled = !state.storeSettings.globalRemarksEnabled;
       document.getElementById('btn-global-remarks-toggle').innerHTML = state.storeSettings.globalRemarksEnabled ? '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>' : '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
