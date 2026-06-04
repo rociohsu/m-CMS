@@ -42,46 +42,45 @@
   <!-- 為了完美呈現手機版 WebView，將最大寬度限制在 max-w-md 且水平置中 -->
   <div class="max-w-md mx-auto min-h-screen bg-gray-50 flex flex-col relative shadow-2xl">
     
-    <!-- 1. 會員登入狀態頂欄 -->
-    <div id="auth-header" class="bg-gray-900 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-lg border-b border-gray-800">
-      <div id="auth-user-info" class="flex items-center space-x-2.5">
-        <!-- 動態載入：頭像 + 暱稱 -->
-      </div>
-      <div id="auth-action">
-        <!-- 動態載入：登出 / 登入按鈕 -->
-      </div>
-    </div>
+    <!-- 頂部導航與分頁 (1. 移除 topbar，整合進 header) -->
+    <header class="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <!-- 2. 由左而右順序: 設定icon -> 批次編輯 -> 大頭貼/登入 (右側) -->
+      <div class="px-4 pt-4 pb-3 flex justify-between items-center">
+        <div class="flex items-center space-x-2.5">
+          <!-- 2-1. 設定icon -->
+          <button 
+            onclick="openStoreSettings()"
+            class="p-2.5 bg-gray-50 text-gray-400 rounded-full hover:bg-orange-50 hover:text-orange-500 transition-all shadow-sm active:scale-95"
+          >
+            <i data-lucide="settings" class="w-[20px] h-[20px]"></i>
+          </button>
 
-    <!-- 頂部導航與分頁 -->
-    <header class="bg-white border-b border-gray-100 sticky top-[53px] z-10">
-      <div class="px-4 pt-5 pb-3 flex justify-between items-center">
-        <h1 class="text-[30px] font-bold text-gray-900 leading-tight">菜單管理</h1>
-        <div class="flex space-x-2">
+          <!-- 2-2. 批次編輯 -->
           <button 
             onclick="toggleBatchMode()"
             id="batch-btn"
-            class="flex items-center space-x-1 px-3 py-1.5 rounded-full text-[13px] font-bold bg-orange-50 text-orange-500 transition-colors"
+            class="flex items-center space-x-1.5 px-4 py-2 rounded-full text-[13px] font-bold bg-orange-50 text-orange-500 transition-all shadow-sm active:scale-95"
           >
             <i data-lucide="list-checks" class="w-[18px] h-[18px]"></i>
             <span id="batch-btn-text">批次編輯</span>
           </button>
-          <button 
-            onclick="openStoreSettings()"
-            class="p-2 bg-gray-50 text-gray-400 rounded-full hover:bg-orange-50 hover:text-orange-500 transition-colors shadow-sm"
-          >
-            <i data-lucide="settings" class="w-[22px] h-[22px]"></i>
-          </button>
+        </div>
+
+        <!-- 2-3. 大頭貼/立即登入 (位於 header 右邊，不放登出按鈕) -->
+        <div id="header-auth-area" class="flex items-center">
+          <!-- 動態載入：頭像名稱膠囊 或 立即登入按鈕 -->
         </div>
       </div>
 
       <!-- Tab 切換 -->
       <div class="flex px-4 border-b border-gray-50">
-        <button onclick="switchTab('main')" id="tab-main" class="flex-1 py-3 text-[15px] font-bold border-b-2 text-center transition-all border-orange-500 text-orange-500">主商品</button>
+        <!-- 5. 頁面中的 "主商品" 均改成 菜單管理 -->
+        <button onclick="switchTab('main')" id="tab-main" class="flex-1 py-3 text-[15px] font-bold border-b-2 text-center transition-all border-orange-500 text-orange-500">菜單管理</button>
         <button onclick="switchTab('addon')" id="tab-addon" class="flex-1 py-3 text-[15px] font-bold border-b-2 text-center transition-all border-transparent text-gray-400">加購品規格</button>
         <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-3 text-[15px] font-bold border-b-2 text-center transition-all border-transparent text-gray-400">時段菜單</button>
       </div>
       
-      <!-- 搜尋與快速分類 (僅在主商品 Tab 顯示) -->
+      <!-- 搜尋與快速分類 (僅在菜單管理 Tab 顯示) -->
       <div id="search-category-bar" class="px-4 py-3">
         <div class="relative mb-3">
           <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"></i>
@@ -89,7 +88,7 @@
             type="text" 
             id="search-input"
             oninput="handleSearch(this.value)"
-            placeholder="搜尋主商品..." 
+            placeholder="搜尋菜單..." 
             class="w-full bg-gray-100 border-none rounded-xl py-3 pl-11 pr-4 focus:ring-2 focus:ring-orange-500 transition-all outline-none text-[15px]"
           />
         </div>
@@ -154,43 +153,17 @@
       </div>
     </div>
 
-    <!-- 2. Supabase Google 登入入口 (遮罩) -->
-    <div id="modal-login" class="absolute inset-0 bg-gray-950/95 z-[100] flex flex-col justify-between p-6 hidden">
-      <!-- 頂部品牌區 -->
-      <div class="space-y-8 pt-16 flex-grow flex flex-col justify-center">
-        <div class="text-center space-y-4">
-          <div class="w-20 h-20 bg-orange-500 rounded-[2rem] mx-auto flex items-center justify-center shadow-2xl shadow-orange-500/30">
-            <i data-lucide="store" class="text-white w-10 h-10"></i>
-          </div>
-          <div class="space-y-2">
-            <h2 class="text-[26px] font-bold text-white tracking-tight leading-tight">點餐平台後台管理系統</h2>
-            <p class="text-gray-400 text-[13px] leading-relaxed max-w-xs mx-auto">請登入您的 Google 帳戶以管理您的菜單，或使用下方開發者模式快速進行功能體驗。</p>
-          </div>
-        </div>
-
-        <div class="space-y-4 max-w-sm mx-auto w-full pt-8">
-          <!-- Google 登入按鈕 -->
-          <button onclick="handleGoogleLogin()" class="w-full flex items-center justify-center bg-white border border-gray-200 text-gray-700 font-bold py-4 px-4 rounded-2xl shadow-lg hover:bg-gray-50 active:scale-95 transition-all text-[15px] space-x-3">
-            <svg class="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.67 1.39 7.56l3.89 3.02C6.24 7.6 8.88 5.04 12 5.04z"/>
-              <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.51h6.46c-.29 1.48-1.14 2.73-2.4 3.58l3.73 2.89c2.18-2.01 3.7-4.97 3.7-8.62z"/>
-              <path fill="#FBBC05" d="M5.28 14.78c-.23-.69-.36-1.42-.36-2.18s.13-1.49.36-2.18L1.39 7.56C.5 9.36 0 11.4 0 12.6s.5 3.24 1.39 5.04l3.89-3.02z"/>
-              <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.73-2.89c-1.03.69-2.35 1.1-3.96 1.1-3.12 0-5.76-2.56-6.72-5.54l-3.89 3.02C3.37 20.33 7.35 23 12 23z"/>
-            </svg>
-            <span>使用 Google 帳戶安全登入</span>
-          </button>
-
-          <!-- 訪客/體驗按鈕 -->
-          <button onclick="bypassLogin()" class="w-full py-4 text-[15px] font-bold text-gray-300 border border-gray-800 rounded-2xl hover:bg-gray-900/50 transition-colors flex items-center justify-center space-x-2 active:scale-95">
-            <i data-lucide="play" class="w-4 h-4"></i>
-            <span>以體驗帳號進入 (Demo Mode)</span>
-          </button>
-        </div>
+    <!-- 會員資料頁面 Modal (整合 Google 登入入口，不預先顯示蓋板) -->
+    <div id="modal-profile" class="fixed inset-0 bg-white z-[90] flex flex-col hidden overflow-y-auto">
+      <div class="px-4 py-5 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 shadow-sm z-10">
+        <button onclick="closeProfileModal()" class="p-1 text-gray-600"><i data-lucide="arrow-left" class="w-7 h-7"></i></button>
+        <h2 class="text-[20px] font-bold">會員個人資料</h2>
+        <div class="w-8"></div>
       </div>
-
-      <!-- 頁底安全宣告 -->
-      <div class="text-center pb-4">
-        <p class="text-gray-600 text-[11px] tracking-wider">SECURED BY SUPABASE AUTHENTICATION</p>
+      
+      <!-- 6. 動態渲染會員資料或登入介面，登入/登出按鈕皆放在此頁最下方 -->
+      <div class="p-6 space-y-6 max-w-md mx-auto w-full flex-grow flex flex-col justify-between" id="profile-content-container">
+        <!-- 會由 renderAuthUI() 即時反應使用者登入狀態並繪製 -->
       </div>
     </div>
 
@@ -198,7 +171,7 @@
 
   <!-- ==================== MODALS 彈窗區 ==================== -->
 
-  <!-- 1. 主商品 編輯/新增 彈窗 -->
+  <!-- 1. 菜單 編輯/新增 彈窗 -->
   <div id="modal-item" class="fixed inset-0 bg-white z-50 flex flex-col hidden overflow-y-auto">
     <div class="px-4 py-5 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 shadow-sm z-10">
       <button onclick="closeItemModal()" class="p-1 text-gray-600"><i data-lucide="arrow-left" class="w-7 h-7"></i></button>
@@ -232,12 +205,12 @@
       <div class="space-y-6">
         <div>
           <label class="block text-[13px] font-bold text-gray-400 mb-2 ml-1">品項名稱</label>
-          <input type="text" id="item-name" placeholder="輸入商品名稱" class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 outline-none focus:border-orange-500 transition-all text-[15px] font-bold" />
+          <input type="text" id="item-name" placeholder="輸入餐點名稱" class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 outline-none focus:border-orange-500 transition-all text-[15px] font-bold" />
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-[13px] font-bold text-gray-400 mb-2 ml-1">商品售價</label>
+            <label class="block text-[13px] font-bold text-gray-400 mb-2 ml-1">售價</label>
             <div class="relative">
               <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
               <input type="number" id="item-price" class="w-full bg-gray-50 border border-gray-200 rounded-2xl pl-10 pr-5 py-4 outline-none focus:border-orange-500 transition-all text-[15px] font-bold" />
@@ -252,7 +225,7 @@
                 </select>
                 <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-5 h-5"></i>
               </div>
-              <button onclick="openCategoryModal()" class="p-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-400 shadow-sm active:bg-orange-50 active:text-orange-500">
+              <button onclick="openCategoryModal()" class="p-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-400 shadow-sm active:bg-orange-50 active:text-orange-500 font-bold">
                 <i data-lucide="settings-2" class="w-5 h-5"></i>
               </button>
             </div>
@@ -263,9 +236,9 @@
         <div>
           <label class="block text-[13px] font-bold text-gray-400 mb-3 ml-1">供應狀態控制</label>
           <div class="flex bg-gray-100 p-1.5 rounded-[1.5rem] shadow-inner border border-gray-200/50">
-            <button onclick="setItemStatus('active')" id="btn-status-active" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">上架</button>
-            <button onclick="setItemStatus('inactive')" id="btn-status-inactive" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">下架</button>
-            <button onclick="setItemStatus('inactive-today')" id="btn-status-inactive-today" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">今日下架</button>
+            <button onclick="setItemStatus('active')" id="btn-status-active" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500 font-bold">上架</button>
+            <button onclick="setItemStatus('inactive')" id="btn-status-inactive" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500 font-bold">下架</button>
+            <button onclick="setItemStatus('inactive-today')" id="btn-status-inactive-today" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500 font-bold">今日下架</button>
           </div>
         </div>
 
@@ -352,9 +325,9 @@
       <div>
         <label class="block text-[13px] font-bold text-gray-400 mb-3 ml-1">供應狀態設定</label>
         <div class="flex bg-gray-100 p-1.5 rounded-[1.5rem] shadow-inner border border-gray-200/50">
-          <button onclick="setAddonGroupStatus('active')" id="btn-addon-status-active" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">上架</button>
-          <button onclick="setAddonGroupStatus('inactive')" id="btn-addon-status-inactive" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">下架</button>
-          <button onclick="setAddonGroupStatus('inactive-today')" id="btn-addon-status-inactive-today" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">今日下架</button>
+          <button onclick="setAddonGroupStatus('active')" id="btn-addon-status-active" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500 font-bold">上架</button>
+          <button onclick="setAddonGroupStatus('inactive')" id="btn-addon-status-inactive" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500 font-bold">下架</button>
+          <button onclick="setAddonGroupStatus('inactive-today')" id="btn-addon-status-inactive-today" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500 font-bold">今日下架</button>
         </div>
       </div>
 
@@ -362,8 +335,8 @@
       <div>
         <label class="block text-[13px] font-bold text-gray-400 mb-2 ml-1">選取限制</label>
         <div class="flex bg-gray-100 p-1.5 rounded-[1.5rem]">
-          <button onclick="setAddonSelectionMode('single')" id="btn-addon-mode-single" class="flex-1 py-2 text-[13px] rounded-xl transition-all text-gray-500">單選</button>
-          <button onclick="setAddonSelectionMode('multiple')" id="btn-addon-mode-multiple" class="flex-1 py-2 text-[13px] rounded-xl transition-all text-gray-500">複選</button>
+          <button onclick="setAddonSelectionMode('single')" id="btn-addon-mode-single" class="flex-1 py-2 text-[13px] rounded-xl transition-all text-gray-500 font-bold">單選</button>
+          <button onclick="setAddonSelectionMode('multiple')" id="btn-addon-mode-multiple" class="flex-1 py-2 text-[13px] rounded-xl transition-all text-gray-500 font-bold">複選</button>
         </div>
       </div>
 
@@ -414,17 +387,17 @@
       <div>
         <label class="block text-[13px] font-bold text-gray-400 mb-3 ml-1">供應狀態設定</label>
         <div class="flex bg-gray-100 p-1.5 rounded-[1.5rem] shadow-inner border border-gray-200/50">
-          <button onclick="setMenuStatus('active')" id="btn-menu-status-active" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">啟用</button>
-          <button onclick="setMenuStatus('inactive')" id="btn-menu-status-inactive" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">停用</button>
-          <button onclick="setMenuStatus('inactive-today')" id="btn-menu-status-inactive-today" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500">今日下架</button>
+          <button onclick="setMenuStatus('active')" id="btn-menu-status-active" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500 font-bold">啟用</button>
+          <button onclick="setMenuStatus('inactive')" id="btn-menu-status-inactive" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500 font-bold">停用</button>
+          <button onclick="setMenuStatus('inactive-today')" id="btn-menu-status-inactive-today" class="flex-1 py-3 text-[13px] rounded-2xl transition-all text-gray-500 font-bold">今日下架</button>
         </div>
       </div>
 
-      <!-- 純淨包含主商品選擇清單 -->
+      <!-- 純淨包含商品選擇清單 -->
       <div class="bg-gray-50 rounded-[2rem] p-6 border border-gray-100">
-        <label class="block text-[15px] font-bold text-gray-700 mb-5 flex items-center"><i data-lucide="layout-grid" class="mr-2 text-orange-500 w-5 h-5"></i> 選擇包含商品</label>
+        <label class="block text-[15px] font-bold text-gray-700 mb-5 flex items-center"><i data-lucide="layout-grid" class="mr-2 text-orange-500 w-5 h-5"></i> 選擇包含菜單品項</label>
         <div id="menu-items-select-list" class="space-y-3">
-          <!-- 主商品選項動態載入 -->
+          <!-- 菜單選項動態載入 -->
         </div>
       </div>
 
@@ -511,9 +484,8 @@
       isBatchMode: false,
       selectedIds: [],
       
-      // Supabase 登入與展示狀態
+      // Supabase 登入狀態
       user: null,
-      isBypassed: false,
 
       storeSettings: {
         globalRemarksEnabled: true,
@@ -620,19 +592,15 @@
 
     // --- Supabase 初始化與認證機制 (正式上線版本硬編碼配置) ---
     function initSupabase() {
-      // 填入您提供的專案正式環境憑證
       const SUPABASE_URL = "https://eusonkecppneirbualig.supabase.co";
       const SUPABASE_ANON_KEY = "sb_publishable_RZ-WBngQ-4ERcXx7wMhpTw_-Dwk61YT";
 
       try {
-        // 初始化 Supabase Client 實例
         window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // 訂閱 Supabase 登入認證狀態
         window.supabaseClient.auth.onAuthStateChange((event, session) => {
           if (session) {
             state.user = session.user;
-            state.isBypassed = false;
           } else {
             state.user = null;
           }
@@ -643,51 +611,117 @@
       }
     }
 
-    // 更新 Supabase 會員 UI 介面
+    // 更新 Supabase 會員 UI 介面 (會員狀態、頭像、名稱、權限資訊)
     function renderAuthUI() {
-      const userInfo = document.getElementById('auth-user-info');
-      const authAction = document.getElementById('auth-action');
-      const loginModal = document.getElementById('modal-login');
+      const headerAuthArea = document.getElementById('header-auth-area');
+      const profileContainer = document.getElementById('profile-content-container');
 
       if (state.user) {
-        // 已成功登入 Google
+        // 2-3. 已登入狀態：大頭貼 + 名稱膠囊 (不放登出按鈕)
         const avatarUrl = state.user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop';
         const fullName = state.user.user_metadata?.full_name || state.user.email || '管理員';
+        const email = state.user.email || '未設定電子信箱';
         
-        userInfo.innerHTML = `
-          <img src="${avatarUrl}" class="w-7 h-7 rounded-full object-cover border border-gray-700 shadow-sm" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop'" />
-          <span class="font-bold text-[13px] text-gray-200">${fullName}</span>
+        let joinedDateStr = '無紀錄';
+        if (state.user.created_at) {
+          const date = new Date(state.user.created_at);
+          joinedDateStr = date.toLocaleDateString('zh-TW', {
+            year: 'numeric', month: 'long', day: 'numeric'
+          });
+        }
+
+        // Header 右側：大頭貼與暱稱
+        headerAuthArea.innerHTML = `
+          <div onclick="openProfileModal()" class="flex items-center space-x-2 bg-gray-900 text-white pl-2 pr-3.5 py-1.5 rounded-full cursor-pointer hover:bg-gray-800 active:scale-95 transition-all shadow-md">
+            <img src="${avatarUrl}" class="w-6 h-6 rounded-full object-cover border border-gray-700 shadow-sm" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop'" />
+            <span class="font-bold text-[13px] text-gray-200 max-w-[80px] truncate">${fullName}</span>
+          </div>
         `;
-        authAction.innerHTML = `
-          <button onclick="handleLogout()" class="text-gray-400 hover:text-red-400 flex items-center space-x-1 transition-all">
-            <i data-lucide="log-out" class="w-4 h-4"></i>
-            <span class="text-[13px] font-bold">登出</span>
+
+        // 6. 會員資料頁內容 (已登入)
+        profileContainer.innerHTML = `
+          <div class="space-y-6">
+            <!-- 6-1. 頭像 / 6-2. 名稱 / 6-5. 權限 -->
+            <div class="text-center py-6 space-y-3 bg-gray-50 rounded-3xl border border-gray-100 p-4 shadow-inner">
+              <img src="${avatarUrl}" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white shadow-lg" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop'" />
+              <h3 class="text-[20px] font-bold text-gray-900">${fullName}</h3>
+              <span class="inline-block bg-orange-100 text-orange-600 text-[13px] px-4 py-1 rounded-full font-bold">一般員工</span>
+            </div>
+
+            <!-- 詳細資料表格 (6-3. 加入時間 / 6-4. Email) -->
+            <div class="bg-white rounded-3xl border border-gray-100 divide-y divide-gray-100 overflow-hidden shadow-sm">
+              <div class="p-4 flex justify-between items-center text-[15px]">
+                <span class="text-gray-400 font-medium">電子信箱</span>
+                <span class="text-gray-800 font-bold">${email}</span>
+              </div>
+              <div class="p-4 flex justify-between items-center text-[15px]">
+                <span class="text-gray-400 font-medium">加入時間</span>
+                <span class="text-gray-800 font-bold">${joinedDateStr}</span>
+              </div>
+              <div class="p-4 flex justify-between items-center text-[15px]">
+                <span class="text-gray-400 font-medium">會員權限</span>
+                <span class="text-gray-800 font-bold">一般員工</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 登出按鈕：安全放置在會員資料頁最下方 -->
+          <button onclick="handleLogoutFromProfile()" class="w-full py-4 bg-red-50 text-red-500 hover:bg-red-100 active:scale-95 transition-all text-[15px] font-bold rounded-2xl flex items-center justify-center space-x-2 border border-red-100">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+            <span>登出系統</span>
           </button>
         `;
-        loginModal.classList.add('hidden');
       } else {
-        // 訪客或未登入狀態
-        userInfo.innerHTML = `
-          <div class="w-7 h-7 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700">
-            <i data-lucide="user-x" class="w-4 h-4 text-gray-400"></i>
-          </div>
-          <span class="text-gray-400 text-[13px] font-medium">展示模式 (未登入)</span>
-        `;
-        authAction.innerHTML = `
-          <button onclick="openLoginModal()" class="bg-orange-500 text-white px-3 py-1.5 rounded-full text-[13px] font-bold flex items-center space-x-1 hover:bg-orange-600 transition-all shadow-md active:scale-95">
+        // 未登入狀態 (1. 不需要蓋板，直接於 header 的右側顯示「立即登入」)
+        headerAuthArea.innerHTML = `
+          <button onclick="openProfileModal()" class="bg-orange-500 text-white px-3.5 py-2.5 rounded-full text-[13px] font-bold shadow-md hover:bg-orange-600 active:scale-95 transition-all flex items-center space-x-1">
             <i data-lucide="log-in" class="w-4 h-4"></i>
             <span>立即登入</span>
           </button>
         `;
 
-        // 如果點選了 bypass 則隱藏登入門檻彈窗，否則顯示強制登入
-        if (state.isBypassed) {
-          loginModal.classList.add('hidden');
-        } else {
-          loginModal.classList.remove('hidden');
-        }
+        // 4. 登入引導內容與登入按鈕 (當訪客點擊立即登入後，在會員個人資料頁下方顯示登入按鈕)
+        profileContainer.innerHTML = `
+          <div class="space-y-6 flex-grow flex flex-col justify-center">
+            <div class="text-center py-8 space-y-4 bg-gray-50 rounded-3xl border border-gray-100 p-6 shadow-inner my-auto">
+              <div class="w-20 h-20 bg-orange-500 rounded-[2rem] mx-auto flex items-center justify-center shadow-2xl shadow-orange-500/30">
+                <i data-lucide="store" class="text-white w-10 h-10"></i>
+              </div>
+              <div class="space-y-2">
+                <h3 class="text-[20px] font-bold text-gray-900">歡迎使用菜單管理系統</h3>
+                <p class="text-gray-500 text-[13px] leading-relaxed max-w-xs mx-auto">請登入 Google 帳號以啟用完整的菜單管理、加購規格及全域收銀功能。</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. 登入按鈕 放在會員資料頁下方 -->
+          <div class="space-y-3">
+            <button onclick="handleGoogleLogin()" class="w-full flex items-center justify-center bg-white border border-gray-200 text-gray-700 font-bold py-4 px-4 rounded-2xl shadow-lg hover:bg-gray-50 active:scale-95 transition-all text-[15px] space-x-3">
+              <svg class="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.67 1.39 7.56l3.89 3.02C6.24 7.6 8.88 5.04 12 5.04z"/>
+                <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.51h6.46c-.29 1.48-1.14 2.73-2.4 3.58l3.73 2.89c2.18-2.01 3.7-4.97 3.7-8.62z"/>
+                <path fill="#FBBC05" d="M5.28 14.78c-.23-.69-.36-1.42-.36-2.18s.13-1.49.36-2.18L1.39 7.56C.5 9.36 0 11.4 0 12.6s.5 3.24 1.39 5.04l3.89-3.02z"/>
+                <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.73-2.89c-1.03.69-2.35 1.1-3.96 1.1-3.12 0-5.76-2.56-6.72-5.54l-3.89 3.02C3.37 20.33 7.35 23 12 23z"/>
+              </svg>
+              <span>使用 Google 帳戶安全登入</span>
+            </button>
+            <div class="text-center">
+              <p class="text-gray-400 text-[11px] tracking-wider uppercase">Secured by Supabase Authentication</p>
+            </div>
+          </div>
+        `;
       }
       lucide.createIcons();
+    }
+
+    // 會員資料頁面開關控制
+    function openProfileModal() {
+      document.getElementById('modal-profile').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeProfileModal() {
+      document.getElementById('modal-profile').classList.add('hidden');
     }
 
     // 觸發 Google OAuth 登入流程
@@ -700,12 +734,12 @@
         const { error } = await window.supabaseClient.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: window.location.origin // 指向當前 Vercel 佈署網址
+            redirectTo: window.location.origin
           }
         });
         if (error) throw error;
       } catch (e) {
-        alert("Google 登入重導向失敗: " + e.message);
+        alert("Google 登入失敗: " + e.message);
       }
     }
 
@@ -715,19 +749,13 @@
         await window.supabaseClient.auth.signOut();
       }
       state.user = null;
-      state.isBypassed = false;
       renderAll();
     }
 
-    // 體驗帳號 Bypass
-    function bypassLogin() {
-      state.isBypassed = true;
-      renderAll();
-    }
-
-    function openLoginModal() {
-      state.isBypassed = false;
-      renderAll();
+    // 從會員頁面登出
+    async function handleLogoutFromProfile() {
+      closeProfileModal();
+      await handleLogout();
     }
 
     // 統一渲染控制
@@ -736,7 +764,7 @@
       renderList();
       renderFAB();
       renderBatchBar();
-      renderAuthUI(); // 同步登入狀態與 UI
+      renderAuthUI();
       lucide.createIcons();
     }
 
@@ -787,6 +815,7 @@
       renderAll();
     }
 
+    // 搜尋與過濾
     function handleSearch(val) {
       state.searchTerm = val.trim().toLowerCase();
       renderList();
@@ -805,7 +834,7 @@
       }
     }
 
-    // 1. 主商品渲染
+    // 1. 菜單品項渲染
     function renderMainItems(container) {
       const filtered = state.items.filter(item => {
         const matchesCategory = state.activeCategory === '全部' || item.category === state.activeCategory;
@@ -814,7 +843,7 @@
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = `<div class="text-center py-12 text-gray-400 text-[15px] italic">無符合之主商品項目</div>`;
+        container.innerHTML = `<div class="text-center py-12 text-gray-400 text-[15px] italic">無符合之菜單項目</div>`;
         return;
       }
 
@@ -1028,7 +1057,7 @@
               </div>
               <div class="flex items-center text-[15px] text-gray-500 space-x-5">
                 <div class="flex items-center"><i data-lucide="clock" class="mr-1.5 text-orange-400 w-4 h-4"></i>${menu.startTime} - ${menu.endTime}</div>
-                <div class="flex items-center"><i data-lucide="layout-grid" class="mr-1.5 text-orange-400 w-4 h-4"></i>${menu.itemIds.length} 個商品</div>
+                <div class="flex items-center"><i data-lucide="layout-grid" class="mr-1.5 text-orange-400 w-4 h-4"></i>${menu.itemIds.length} 個品項</div>
               </div>
             </div>
 
@@ -1108,11 +1137,9 @@
       draggedIndex = idx;
       activeTouchListType = listType;
       
-      // 動態掛載非被動(non-passive)事件，以支援 preventDefault() 阻止網頁原生滾動
       window.addEventListener('touchmove', handleWindowTouchMove, { passive: false });
       window.addEventListener('touchend', handleWindowTouchEnd);
       
-      // 為被拖曳卡片注入半透明與縮小樣式
       const containerItem = document.querySelector(`[data-index="${idx}"][data-list-type="${listType}"]`);
       if (containerItem) {
         containerItem.classList.add('dragging-active');
@@ -1122,21 +1149,18 @@
     function handleWindowTouchMove(e) {
       if (draggedIndex === null) return;
       
-      // 精準阻斷手機原生滾動
       e.preventDefault();
       
       const touch = e.touches[0];
       const element = document.elementFromPoint(touch.clientX, touch.clientY);
       if (!element) return;
       
-      // 尋找具有 data-list-type 的卡片容器
       const targetItem = element.closest(`[data-list-type="${activeTouchListType}"]`);
       if (!targetItem) return;
       
       const targetIdx = parseInt(targetItem.getAttribute('data-index'));
       if (isNaN(targetIdx) || targetIdx === draggedIndex) return;
       
-      // 交換資料庫陣列
       let list = [];
       if (activeTouchListType === 'main') {
         list = state.items;
@@ -1164,10 +1188,8 @@
         renderCategoryModalList();
       }
       
-      // 更新為新的定位，不中斷手勢
       draggedIndex = targetIdx;
       
-      // 為新替換的目標也套用拖曳高亮樣式
       const containerItem = document.querySelector(`[data-index="${draggedIndex}"][data-list-type="${activeTouchListType}"]`);
       if (containerItem) {
         containerItem.classList.add('dragging-active');
@@ -1177,7 +1199,6 @@
     }
 
     function handleWindowTouchEnd() {
-      // 解除全域事件監聽，還原手機原生滾動
       window.removeEventListener('touchmove', handleWindowTouchMove);
       window.removeEventListener('touchend', handleWindowTouchEnd);
       
@@ -1204,7 +1225,6 @@
         text.innerText = '批次編輯';
       }
 
-      // 控制補庫存按鈕顯示
       const restockBtn = document.getElementById('batch-restock-btn');
       if (state.activeTab === 'main') {
         restockBtn.style.opacity = '1';
@@ -1230,6 +1250,7 @@
       renderAll();
     }
 
+    // 批次全選
     function batchSelectAll() {
       let currentList = [];
       if (state.activeTab === 'main') {
@@ -1260,6 +1281,7 @@
       }
     }
 
+    // 批次動作執行
     function triggerBatchAction(action) {
       if (state.selectedIds.length === 0) return;
 
@@ -1308,7 +1330,7 @@
       toggleBatchMode(false);
     }
 
-    // --- 主商品 複製與新增/編輯 模組邏輯 ---
+    // --- 菜單 複製與新增/編輯 模組邏輯 ---
     function duplicateItem(e, id) {
       e.stopPropagation();
       const origin = state.items.find(x => x.id === id);
@@ -1321,7 +1343,6 @@
         status: 'inactive'
       };
 
-      // 複製出新品項排序在最上方
       state.items = [copy, ...state.items];
       renderAll();
     }
@@ -1450,17 +1471,15 @@
         name: '', price: '', category: state.categories[0] || '未分類', description: '', status: 'active', tags: [], image: null, stockEnabled: false, currentStock: 0, autoRestock: 0, addonGroupIds: [], remarksEnabled: true
       };
       
-      document.getElementById('modal-item-title').innerText = '新增品項';
+      document.getElementById('modal-item-title').innerText = '新增菜單品項';
       document.getElementById('delete-item-btn').classList.add('hidden');
       
-      // 復原初始 UI 顯示
       document.getElementById('item-name').value = '';
       document.getElementById('item-price').value = '';
       removeImage();
       populateCategoryOptions();
       setItemStatus('active');
       
-      // 備註、庫存重置
       document.getElementById('btn-remarks-toggle').innerHTML = '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>';
       document.getElementById('btn-stock-toggle').innerHTML = '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
       document.getElementById('stock-fields').classList.add('hidden');
@@ -1484,14 +1503,12 @@
       state.editingItem = item;
       state.formData = JSON.parse(JSON.stringify(item));
 
-      document.getElementById('modal-item-title').innerText = '編輯品項';
+      document.getElementById('modal-item-title').innerText = '編輯菜單品項';
       document.getElementById('delete-item-btn').classList.remove('hidden');
 
-      // 載入資料
       document.getElementById('item-name').value = state.formData.name;
       document.getElementById('item-price').value = state.formData.price;
       
-      // 圖片載入
       if (state.formData.image) {
         document.getElementById('item-img-preview').src = state.formData.image;
         document.getElementById('img-preview-container').classList.remove('hidden');
@@ -1504,7 +1521,6 @@
       document.getElementById('item-category').value = state.formData.category;
       setItemStatus(state.formData.status);
 
-      // 備註與庫存開關
       document.getElementById('btn-remarks-toggle').innerHTML = state.formData.remarksEnabled ? '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>' : '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
       document.getElementById('btn-stock-toggle').innerHTML = state.formData.stockEnabled ? '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>' : '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
       
@@ -1549,10 +1565,8 @@
       }
 
       if (state.editingItem) {
-        // 更新現有商品
         state.items = state.items.map(i => i.id === state.editingItem.id ? { ...state.formData } : i);
       } else {
-        // 新增商品，複製品項排序在最上方
         state.items = [{ ...state.formData, id: Date.now() }, ...state.items];
       }
 
@@ -1572,7 +1586,7 @@
       renderAll();
     }
 
-    // --- 加購品規格 模組邏輯 (新增選項置頂) ---
+    // --- 加購品規格 模組邏輯 ---
     function setAddonGroupStatus(status) {
       state.addonFormData.status = status;
       ['active', 'inactive', 'inactive-today'].forEach(s => {
@@ -1586,7 +1600,6 @@
       });
     }
 
-    // 設定單選/複選
     function setAddonSelectionMode(mode) {
       state.addonFormData.selectionMode = mode;
       ['single', 'multiple'].forEach(m => {
@@ -1643,7 +1656,6 @@
       lucide.createIcons();
     }
 
-    // 選項置頂新增邏輯 (將新選項放在陣列最前方)
     function addAddonOption() {
       const newItem = { id: 'opt_' + Date.now(), name: '', price: 0, subGroupIds: [] };
       state.addonFormData.options = [newItem, ...state.addonFormData.options];
@@ -1721,7 +1733,6 @@
       if (existingIndex > -1) {
         state.addonGroups[existingIndex] = { ...state.addonFormData };
       } else {
-        // 新規格組排序在最上方
         state.addonGroups = [{ ...state.addonFormData }, ...state.addonGroups];
       }
 
@@ -1749,6 +1760,7 @@
       }
     }
 
+
     // --- 時段菜單 模組邏輯 ---
     function setMenuStatus(status) {
       state.menuFormData.status = status;
@@ -1765,7 +1777,7 @@
 
     function renderMenuItemsSelectList() {
       const container = document.getElementById('menu-items-select-list');
-      // 純淨清單：過濾僅顯示 type: 'main'
+      // 過濾僅顯示 type: 'main' 的菜單
       const mainItems = state.items.filter(i => i.type === 'main');
       
       container.innerHTML = mainItems.map(item => {
@@ -1819,7 +1831,6 @@
       lucide.createIcons();
     }
 
-    // 關閉時段菜單模態框
     function closeMenuModal() {
       document.getElementById('modal-menu').classList.add('hidden');
     }
@@ -1865,7 +1876,8 @@
       }
     }
 
-    // --- 商店設定 模組邏輯 (結帳加購品與全域備註) ---
+
+    // --- 商店設定 模組邏輯 ---
     function openStoreSettings() {
       document.getElementById('btn-global-remarks-toggle').innerHTML = state.storeSettings.globalRemarksEnabled ? '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>' : '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
       renderCheckoutAddons();
@@ -1873,12 +1885,10 @@
       lucide.createIcons();
     }
 
-    // 關閉全域商店設定
     function closeStoreSettings() {
       document.getElementById('modal-store-settings').classList.add('hidden');
     }
 
-    // 切換全域顧客備註
     function toggleGlobalRemarks() {
       state.storeSettings.globalRemarksEnabled = !state.storeSettings.globalRemarksEnabled;
       document.getElementById('btn-global-remarks-toggle').innerHTML = state.storeSettings.globalRemarksEnabled ? '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>' : '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
@@ -1929,16 +1939,16 @@
       if (field === 'status') renderCheckoutAddons();
     }
 
-    // --- 商品分類管理 模組邏輯 ---
+
+    // --- 分類管理 模組邏輯 ---
     function openCategoryModal() {
       renderCategoryModalList();
       document.getElementById('modal-category').classList.remove('hidden');
     }
 
-    // 關閉分類管理彈窗
     function closeCategoryModal() {
       document.getElementById('modal-category').classList.add('hidden');
-      populateCategoryOptions(); // 確保主商品編輯彈窗內的下拉選單同步更新
+      populateCategoryOptions();
     }
 
     function renderCategoryModalList() {
@@ -1985,7 +1995,6 @@
 
     function deleteCategory(cat) {
       state.categories = state.categories.filter(c => c !== cat);
-      // 當刪除分類時，原屬於該分類的商品會自動歸類至「未分類」，確保資料不會出錯。
       state.items = state.items.map(item => {
         if (item.category === cat) {
           return { ...item, category: '未分類' };
@@ -2001,7 +2010,7 @@
       lucide.createIcons();
     }
 
-    // 分類管理拖拉邏輯
+    // 分類排序拖拉邏輯
     let draggedCatIndex = null;
     function handleCategoryDragStart(e, idx) {
       draggedCatIndex = idx;
