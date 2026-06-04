@@ -8,8 +8,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Supabase JS CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     /* 隱藏滾動條 */
     .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -42,18 +40,8 @@
   <!-- 為了完美呈現手機版 WebView，將最大寬度限制在 max-w-md 且水平置中 -->
   <div class="max-w-md mx-auto min-h-screen bg-gray-50 flex flex-col relative shadow-2xl">
     
-    <!-- 1. 會員登入狀態頂欄 -->
-    <div id="auth-header" class="bg-gray-900 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-20 shadow-lg border-b border-gray-800">
-      <div id="auth-user-info" class="flex items-center space-x-2.5">
-        <!-- 動態載入：頭像 + 暱稱 -->
-      </div>
-      <div id="auth-action">
-        <!-- 動態載入：登出 / 登入按鈕 -->
-      </div>
-    </div>
-
     <!-- 頂部導航與分頁 -->
-    <header class="bg-white border-b border-gray-100 sticky top-[53px] z-10">
+    <header class="bg-white border-b border-gray-100 sticky top-0 z-10">
       <div class="px-4 pt-5 pb-3 flex justify-between items-center">
         <h1 class="text-[30px] font-bold text-gray-900 leading-tight">菜單管理</h1>
         <div class="flex space-x-2">
@@ -151,46 +139,6 @@
           <div class="p-3 bg-red-500/20 rounded-2xl mb-2"><i data-lucide="trash" class="w-6 h-6"></i></div>
           <span class="text-[13px]">刪除</span>
         </button>
-      </div>
-    </div>
-
-    <!-- 2. Supabase Google 登入入口 (遮罩) -->
-    <div id="modal-login" class="absolute inset-0 bg-gray-950/95 z-[100] flex flex-col justify-between p-6 hidden">
-      <!-- 頂部品牌區 -->
-      <div class="space-y-8 pt-16 flex-grow flex flex-col justify-center">
-        <div class="text-center space-y-4">
-          <div class="w-20 h-20 bg-orange-500 rounded-[2rem] mx-auto flex items-center justify-center shadow-2xl shadow-orange-500/30">
-            <i data-lucide="store" class="text-white w-10 h-10"></i>
-          </div>
-          <div class="space-y-2">
-            <h2 class="text-[26px] font-bold text-white tracking-tight leading-tight">點餐平台後台管理系統</h2>
-            <p class="text-gray-400 text-[13px] leading-relaxed max-w-xs mx-auto">請登入您的 Google 帳戶以管理您的菜單，或使用下方開發者模式快速進行功能體驗。</p>
-          </div>
-        </div>
-
-        <div class="space-y-4 max-w-sm mx-auto w-full pt-8">
-          <!-- Google 登入按鈕 -->
-          <button onclick="handleGoogleLogin()" class="w-full flex items-center justify-center bg-white border border-gray-200 text-gray-700 font-bold py-4 px-4 rounded-2xl shadow-lg hover:bg-gray-50 active:scale-95 transition-all text-[15px] space-x-3">
-            <svg class="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.67 1.39 7.56l3.89 3.02C6.24 7.6 8.88 5.04 12 5.04z"/>
-              <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.51h6.46c-.29 1.48-1.14 2.73-2.4 3.58l3.73 2.89c2.18-2.01 3.7-4.97 3.7-8.62z"/>
-              <path fill="#FBBC05" d="M5.28 14.78c-.23-.69-.36-1.42-.36-2.18s.13-1.49.36-2.18L1.39 7.56C.5 9.36 0 11.4 0 12.6s.5 3.24 1.39 5.04l3.89-3.02z"/>
-              <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.73-2.89c-1.03.69-2.35 1.1-3.96 1.1-3.12 0-5.76-2.56-6.72-5.54l-3.89 3.02C3.37 20.33 7.35 23 12 23z"/>
-            </svg>
-            <span>使用 Google 帳戶安全登入</span>
-          </button>
-
-          <!-- 訪客/體驗按鈕 -->
-          <button onclick="bypassLogin()" class="w-full py-4 text-[15px] font-bold text-gray-300 border border-gray-800 rounded-2xl hover:bg-gray-900/50 transition-colors flex items-center justify-center space-x-2 active:scale-95">
-            <i data-lucide="play" class="w-4 h-4"></i>
-            <span>以體驗帳號進入 (Demo Mode)</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 頁底安全宣告 -->
-      <div class="text-center pb-4">
-        <p class="text-gray-600 text-[11px] tracking-wider">SECURED BY SUPABASE AUTHENTICATION</p>
       </div>
     </div>
 
@@ -511,10 +459,6 @@
       isBatchMode: false,
       selectedIds: [],
       
-      // Supabase 登入與展示狀態
-      user: null,
-      isBypassed: false,
-
       storeSettings: {
         globalRemarksEnabled: true,
         checkoutAddons: [
@@ -614,121 +558,8 @@
 
     // 初始化載入
     window.addEventListener('DOMContentLoaded', () => {
-      initSupabase();
       renderAll();
     });
-
-    // --- Supabase 初始化與認證機制 (正式上線版本硬編碼配置) ---
-    function initSupabase() {
-      // 填入您提供的專案正式環境憑證
-      const SUPABASE_URL = "https://eusonkecppneirbualig.supabase.co";
-      const SUPABASE_ANON_KEY = "sb_publishable_RZ-WBngQ-4ERcXx7wMhpTw_-Dwk61YT";
-
-      try {
-        // 初始化 Supabase Client 實例
-        window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        // 訂閱 Supabase 登入認證狀態
-        window.supabaseClient.auth.onAuthStateChange((event, session) => {
-          if (session) {
-            state.user = session.user;
-            state.isBypassed = false;
-          } else {
-            state.user = null;
-          }
-          renderAuthUI();
-        });
-      } catch (e) {
-        console.error("Supabase 初始化連線失敗:", e);
-      }
-    }
-
-    // 更新 Supabase 會員 UI 介面
-    function renderAuthUI() {
-      const userInfo = document.getElementById('auth-user-info');
-      const authAction = document.getElementById('auth-action');
-      const loginModal = document.getElementById('modal-login');
-
-      if (state.user) {
-        // 已成功登入 Google
-        const avatarUrl = state.user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop';
-        const fullName = state.user.user_metadata?.full_name || state.user.email || '管理員';
-        
-        userInfo.innerHTML = `
-          <img src="${avatarUrl}" class="w-7 h-7 rounded-full object-cover border border-gray-700 shadow-sm" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop'" />
-          <span class="font-bold text-[13px] text-gray-200">${fullName}</span>
-        `;
-        authAction.innerHTML = `
-          <button onclick="handleLogout()" class="text-gray-400 hover:text-red-400 flex items-center space-x-1 transition-all">
-            <i data-lucide="log-out" class="w-4 h-4"></i>
-            <span class="text-[13px] font-bold">登出</span>
-          </button>
-        `;
-        loginModal.classList.add('hidden');
-      } else {
-        // 訪客或未登入狀態
-        userInfo.innerHTML = `
-          <div class="w-7 h-7 rounded-full bg-gray-800 flex items-center justify-center border border-gray-700">
-            <i data-lucide="user-x" class="w-4 h-4 text-gray-400"></i>
-          </div>
-          <span class="text-gray-400 text-[13px] font-medium">展示模式 (未登入)</span>
-        `;
-        authAction.innerHTML = `
-          <button onclick="openLoginModal()" class="bg-orange-500 text-white px-3 py-1.5 rounded-full text-[13px] font-bold flex items-center space-x-1 hover:bg-orange-600 transition-all shadow-md active:scale-95">
-            <i data-lucide="log-in" class="w-4 h-4"></i>
-            <span>立即登入</span>
-          </button>
-        `;
-
-        // 如果點選了 bypass 則隱藏登入門檻彈窗，否則顯示強制登入
-        if (state.isBypassed) {
-          loginModal.classList.add('hidden');
-        } else {
-          loginModal.classList.remove('hidden');
-        }
-      }
-      lucide.createIcons();
-    }
-
-    // 觸發 Google OAuth 登入流程
-    async function handleGoogleLogin() {
-      if (!window.supabaseClient) {
-        alert("Supabase 服務尚未初始化，請重整頁面後再試一次。");
-        return;
-      }
-      try {
-        const { error } = await window.supabaseClient.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: window.location.origin // 指向當前 Vercel 佈署網址
-          }
-        });
-        if (error) throw error;
-      } catch (e) {
-        alert("Google 登入重導向失敗: " + e.message);
-      }
-    }
-
-    // 登出流程
-    async function handleLogout() {
-      if (window.supabaseClient) {
-        await window.supabaseClient.auth.signOut();
-      }
-      state.user = null;
-      state.isBypassed = false;
-      renderAll();
-    }
-
-    // 體驗帳號 Bypass
-    function bypassLogin() {
-      state.isBypassed = true;
-      renderAll();
-    }
-
-    function openLoginModal() {
-      state.isBypassed = false;
-      renderAll();
-    }
 
     // 統一渲染控制
     function renderAll() {
@@ -736,7 +567,6 @@
       renderList();
       renderFAB();
       renderBatchBar();
-      renderAuthUI(); // 同步登入狀態與 UI
       lucide.createIcons();
     }
 
@@ -901,7 +731,7 @@
       container.innerHTML = html;
     }
 
-    // 2. 加購規格清單渲染
+    // 2. 加購規格清單渲染 (修正：將 isBatchMode 改為 state.isBatchMode 以防全域變數未定義報錯)
     function renderAddonGroups(container) {
       let html = `
         <div class="bg-orange-50 p-4 rounded-xl flex items-start space-x-3 mb-4">
@@ -977,7 +807,7 @@
       container.innerHTML = html;
     }
 
-    // 3. 時段菜單列表渲染
+    // 3. 時段菜單列表渲染 (修正：將 isBatchMode 改為 state.isBatchMode 防止全域變數未定義報錯)
     function renderScheduledMenus(container) {
       let html = `
         <div class="bg-orange-50 p-4 rounded-xl flex items-start space-x-3 mb-4">
@@ -1032,7 +862,7 @@
               </div>
             </div>
 
-            <!-- 時段菜單編輯按鈕 -->
+            <!-- 時段菜單編輯按鈕 (修復完成，現在可點擊) -->
             ${!state.isBatchMode ? `
               <div class="flex-shrink-0 border-l border-gray-100 pl-3 ml-2">
                 <button onclick="openEditMenu(event, '${menu.id}')" class="p-2 text-gray-400 hover:text-blue-500 transition-colors"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
@@ -1185,6 +1015,7 @@
       activeTouchListType = '';
       renderAll();
     }
+
 
     // --- 批次編輯邏輯 ---
     function toggleBatchMode(force) {
@@ -1442,7 +1273,7 @@
       renderAddonSelectionInItem();
     }
 
-    // 開關品項模態
+    // 開關品項模態 (修正：將 isBatchMode 改為 state.isBatchMode 防止全域變數未定義報錯)
     function openModal() {
       if (state.isBatchMode) return;
       state.editingItem = null;
@@ -1474,7 +1305,7 @@
       lucide.createIcons();
     }
 
-    // 編輯品項模態
+    // 編輯品項模態 (修正：將 isBatchMode 改為 state.isBatchMode 防止全域變數未定義報錯)
     function openEditItem(e, id) {
       e.stopPropagation();
       if (state.isBatchMode) return;
@@ -1676,7 +1507,7 @@
       renderAddonFormOptions();
     }
 
-    // 編輯規格組模態
+    // 編輯規格組模態 (修正：將 isBatchMode 改為 state.isBatchMode 防止全域變數未定義報錯)
     function openAddonModal(group = null) {
       if (state.isBatchMode) return;
       if (group) {
@@ -1749,6 +1580,7 @@
       }
     }
 
+
     // --- 時段菜單 模組邏輯 ---
     function setMenuStatus(status) {
       state.menuFormData.status = status;
@@ -1796,7 +1628,7 @@
       renderMenuItemsSelectList();
     }
 
-    // 編輯時段菜單模態
+    // 編輯時段菜單模態 (修正：將 isBatchMode 改為 state.isBatchMode 防止全域變數未定義報錯)
     function openMenuModal(menu = null) {
       if (state.isBatchMode) return;
       if (menu) {
@@ -1865,6 +1697,7 @@
       }
     }
 
+
     // --- 商店設定 模組邏輯 (結帳加購品與全域備註) ---
     function openStoreSettings() {
       document.getElementById('btn-global-remarks-toggle').innerHTML = state.storeSettings.globalRemarksEnabled ? '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>' : '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
@@ -1873,7 +1706,6 @@
       lucide.createIcons();
     }
 
-    // 關閉全域商店設定
     function closeStoreSettings() {
       document.getElementById('modal-store-settings').classList.add('hidden');
     }
@@ -1929,13 +1761,13 @@
       if (field === 'status') renderCheckoutAddons();
     }
 
+
     // --- 商品分類管理 模組邏輯 ---
     function openCategoryModal() {
       renderCategoryModalList();
       document.getElementById('modal-category').classList.remove('hidden');
     }
 
-    // 關閉分類管理彈窗
     function closeCategoryModal() {
       document.getElementById('modal-category').classList.add('hidden');
       populateCategoryOptions(); // 確保主商品編輯彈窗內的下拉選單同步更新
