@@ -42,12 +42,12 @@
   <!-- 為了完美呈現手機版 WebView，將最大寬度限制在 max-w-md 且水平置中 -->
   <div class="max-w-md mx-auto min-h-screen bg-gray-50 flex flex-col relative shadow-2xl">
     
-    <!-- 頂部導航與分頁 (1. 移除 topbar，整合進 header) -->
+    <!-- 頂部導航與分頁 -->
     <header class="bg-white border-b border-gray-100 sticky top-0 z-10">
-      <!-- 2. 由左而右順序: 設定icon -> 批次編輯 -> 大頭貼/登入 (右側) -->
+      <!-- 由左而右順序: 設定icon -> 批次編輯 -> 大頭貼/登入 (右側) -->
       <div class="px-4 pt-4 pb-3 flex justify-between items-center">
         <div class="flex items-center space-x-2.5">
-          <!-- 2-1. 設定icon -->
+          <!-- 設定icon -->
           <button 
             onclick="openStoreSettings()"
             class="p-2.5 bg-gray-50 text-gray-400 rounded-full hover:bg-orange-50 hover:text-orange-500 transition-all shadow-sm active:scale-95"
@@ -55,7 +55,7 @@
             <i data-lucide="settings" class="w-[20px] h-[20px]"></i>
           </button>
 
-          <!-- 2-2. 批次編輯 -->
+          <!-- 批次編輯 -->
           <button 
             onclick="toggleBatchMode()"
             id="batch-btn"
@@ -66,7 +66,7 @@
           </button>
         </div>
 
-        <!-- 2-3. 大頭貼/立即登入 (位於 header 右邊，不放登出按鈕) -->
+        <!-- 大頭貼/立即登入 (位於 header 右邊) -->
         <div id="header-auth-area" class="flex items-center">
           <!-- 動態載入：頭像名稱膠囊 或 立即登入按鈕 -->
         </div>
@@ -74,7 +74,7 @@
 
       <!-- Tab 切換 -->
       <div class="flex px-4 border-b border-gray-50">
-        <!-- 5. 頁面中的 "主商品" 均改成 菜單管理 -->
+        <!-- 頁面中的 "主商品" 均改成 菜單管理 -->
         <button onclick="switchTab('main')" id="tab-main" class="flex-1 py-3 text-[15px] font-bold border-b-2 text-center transition-all border-orange-500 text-orange-500">菜單管理</button>
         <button onclick="switchTab('addon')" id="tab-addon" class="flex-1 py-3 text-[15px] font-bold border-b-2 text-center transition-all border-transparent text-gray-400">加購品規格</button>
         <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-3 text-[15px] font-bold border-b-2 text-center transition-all border-transparent text-gray-400">時段菜單</button>
@@ -161,9 +161,9 @@
         <div class="w-8"></div>
       </div>
       
-      <!-- 6. 動態渲染會員資料或登入介面，登入/登出按鈕皆放在此頁最下方 -->
+      <!-- 動態渲染會員資料或登入介面，登入/登出按鈕皆放在此頁最下方 -->
       <div class="p-6 space-y-6 max-w-md mx-auto w-full flex-grow flex flex-col justify-between" id="profile-content-container">
-        <!-- 會由 renderAuthUI() 即時反應使用者登入狀態並繪製 -->
+        <!-- 會由 renderAuthUI() 即時反應使用者登入狀態並與 Supabase 進行同步讀寫 -->
       </div>
     </div>
 
@@ -344,7 +344,7 @@
       <div class="space-y-6">
         <div class="flex justify-between items-center px-1 border-b border-gray-100 pb-3">
           <label class="text-[15px] font-bold text-gray-800">規格選項管理</label>
-          <button onclick="addAddonOption()" class="text-orange-500 text-[13px] font-bold flex items-center bg-orange-50 px-3 py-1.5 rounded-full">
+          <button onclick="addAddonOption()" class="text-orange-500 text-[13px] font-bold flex items-center bg-orange-50 px-3 py-1.5 rounded-full font-bold">
             <i data-lucide="plus" class="w-4 h-4 mr-1"></i> 新增選項
           </button>
         </div>
@@ -354,7 +354,7 @@
       </div>
 
       <!-- 刪除此規格組按鈕 -->
-      <button id="delete-addon-group-btn" onclick="deleteCurrentAddonGroup()" class="w-full py-5 bg-white text-red-500 text-[15px] font-bold border border-red-100 rounded-3xl mt-8 mb-12 shadow-sm active:bg-red-50 transition-colors hidden">刪除此規格組</button>
+      <button id="delete-addon-group-btn" onclick="deleteCurrentAddonGroup()" class="w-full py-5 bg-white text-red-500 text-[15px] font-bold border border-red-100 rounded-3xl mt-8 mb-12 shadow-sm active:bg-red-50 transition-colors hidden font-bold">刪除此規格組</button>
     </div>
   </div>
 
@@ -402,7 +402,7 @@
       </div>
 
       <!-- 刪除時段菜單按鈕 -->
-      <button id="delete-menu-btn" onclick="deleteCurrentMenu()" class="w-full py-5 bg-white text-red-500 text-[15px] font-bold border border-red-100 rounded-3xl mt-8 mb-12 shadow-sm active:bg-red-50 transition-colors hidden">刪除此時段菜單</button>
+      <button id="delete-menu-btn" onclick="deleteCurrentMenu()" class="w-full py-5 bg-white text-red-500 text-[15px] font-bold border border-red-100 rounded-3xl mt-8 mb-12 shadow-sm active:bg-red-50 transition-colors hidden font-bold">刪除此時段菜單</button>
     </div>
   </div>
 
@@ -441,7 +441,7 @@
               <p class="text-[13px] text-gray-400 mt-0.5">於結帳前詢問 (如提袋、餐具)</p>
             </div>
           </div>
-          <button onclick="addNewCheckoutAddon()" class="text-orange-500 text-[13px] font-bold flex items-center bg-orange-50 px-4 py-2 rounded-full active:scale-95 transition-transform">
+          <button onclick="addNewCheckoutAddon()" class="text-orange-500 text-[13px] font-bold flex items-center bg-orange-50 px-4 py-2 rounded-full active:scale-95 transition-transform font-bold">
             <i data-lucide="plus" class="w-4 h-4 mr-1"></i> 新增
           </button>
         </div>
@@ -484,8 +484,9 @@
       isBatchMode: false,
       selectedIds: [],
       
-      // Supabase 登入狀態
-      user: null,
+      // Supabase Auth & DB 儲存狀態 (新增)
+      user: null,         // 存放 Supabase Auth 認證數據
+      userProfile: null,  // 存放您自訂資料表中同步下來的最新會員欄位數據
 
       storeSettings: {
         globalRemarksEnabled: true,
@@ -590,7 +591,23 @@
       renderAll();
     });
 
-    // --- Supabase 初始化與認證機制 (正式上線版本硬編碼配置) ---
+    // --- Supabase 正式上線配置與資料表自動讀取/寫入機制 ---
+    const DB_TABLE_NAME = 'profiles'; // 您的 Supabase 會員資料表名稱
+
+    // 會員層級映射：網頁對應的中文顯示
+    const levelMap = {
+      0: '管理員',
+      1: '一般員工',
+      2: '店長'
+    };
+
+    // 會員層級樣式：用於呈現不同職位的高質感標籤配色
+    const levelBadgeStyleMap = {
+      0: 'bg-red-100 text-red-600',        // 管理員
+      1: 'bg-orange-100 text-orange-600',  // 一般員工
+      2: 'bg-amber-100 text-amber-700'     // 店長
+    };
+
     function initSupabase() {
       const SUPABASE_URL = "https://eusonkecppneirbualig.supabase.co";
       const SUPABASE_ANON_KEY = "sb_publishable_RZ-WBngQ-4ERcXx7wMhpTw_-Dwk61YT";
@@ -598,16 +615,82 @@
       try {
         window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        window.supabaseClient.auth.onAuthStateChange((event, session) => {
+        // 監聽 Auth 狀態改變
+        window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
           if (session) {
             state.user = session.user;
+            // 即時向 Supabase 資料表讀取，若無則自動在資料表中建立
+            await syncUserProfile(session.user);
           } else {
             state.user = null;
+            state.userProfile = null;
           }
           renderAuthUI();
         });
       } catch (e) {
         console.error("Supabase 初始化連線失敗:", e);
+      }
+    }
+
+    // 即時同步與寫入/讀取資料庫
+    async function syncUserProfile(authUser) {
+      if (!authUser) return;
+
+      try {
+        // 1. 先從您的 profiles 資料表中查詢此使用者的資料
+        const { data, error } = await window.supabaseClient
+          .from(DB_TABLE_NAME)
+          .select('*')
+          .eq('id', authUser.id)
+          .single();
+
+        if (error && (error.code === 'PGRST116' || error.message.includes('0 rows'))) {
+          // PGRST116 代表查無此筆資料，為全新登入的使用者，執行自動寫入 (Insert) 邏輯
+          const newProfile = {
+            id: authUser.id,
+            email: authUser.email,
+            display_name: authUser.user_metadata?.full_name || authUser.email.split('@')[0] || '新員工',
+            avatar_url: authUser.user_metadata?.avatar_url || '',
+            level: 1 // 預設 1: 一般員工
+          };
+
+          const { data: insertedData, error: insertError } = await window.supabaseClient
+            .from(DB_TABLE_NAME)
+            .insert([newProfile])
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error("Supabase 寫入新會員資料失敗 (請檢查 RLS 寫入政策是否允許)：", insertError);
+            // 降級容錯處理：即使寫入失敗也利用 auth 內層資訊填充，不卡死前端
+            state.userProfile = {
+              id: authUser.id,
+              email: authUser.email,
+              display_name: newProfile.display_name,
+              avatar_url: newProfile.avatar_url,
+              created_at: new Date().toISOString(),
+              level: 1
+            };
+          } else {
+            state.userProfile = insertedData;
+          }
+        } else if (error) {
+          console.error("查詢 Supabase 資料表發生錯誤 (請檢查資料表結構或啟用 RLS)：", error);
+          // 降級容錯處理
+          state.userProfile = {
+            id: authUser.id,
+            email: authUser.email,
+            display_name: authUser.user_metadata?.full_name || '新員工',
+            avatar_url: authUser.user_metadata?.avatar_url || '',
+            created_at: authUser.created_at || new Date().toISOString(),
+            level: 1
+          };
+        } else {
+          // 2. 查詢成功，直接更新前端系統狀態
+          state.userProfile = data;
+        }
+      } catch (err) {
+        console.error("同步會員資料庫時發生未預期錯誤:", err);
       }
     }
 
@@ -617,50 +700,55 @@
       const profileContainer = document.getElementById('profile-content-container');
 
       if (state.user) {
-        // 2-3. 已登入狀態：大頭貼 + 名稱膠囊 (不放登出按鈕)
-        const avatarUrl = state.user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop';
-        const fullName = state.user.user_metadata?.full_name || state.user.email || '管理員';
-        const email = state.user.email || '未設定電子信箱';
-        
-        let joinedDateStr = '無紀錄';
-        if (state.user.created_at) {
-          const date = new Date(state.user.created_at);
+        // 已成功登入 Google
+        // 先行載入資料庫的最新變更，若尚未讀取完畢則從 Auth 抓取備用資訊
+        const avatarUrl = state.userProfile?.avatar_url || state.user.user_metadata?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop';
+        const fullName = state.userProfile?.display_name || state.user.user_metadata?.full_name || state.user.email || '管理員';
+        const email = state.userProfile?.email || state.user.email || '未設定電子信箱';
+        const levelNum = state.userProfile?.level !== undefined ? state.userProfile.level : 1;
+        const levelText = levelMap[levelNum] || '一般員工';
+        const levelBadgeClass = levelBadgeStyleMap[levelNum] || 'bg-orange-100 text-orange-600';
+
+        let joinedDateStr = '讀取中...';
+        const rawCreatedAt = state.userProfile?.created_at || state.user.created_at;
+        if (rawCreatedAt) {
+          const date = new Date(rawCreatedAt);
           joinedDateStr = date.toLocaleDateString('zh-TW', {
             year: 'numeric', month: 'long', day: 'numeric'
           });
         }
 
-        // Header 右側：大頭貼與暱稱
+        // Header 右側：大頭貼與暱稱膠囊
         headerAuthArea.innerHTML = `
-          <div onclick="openProfileModal()" class="flex items-center space-x-2 bg-gray-900 text-white pl-2 pr-3.5 py-1.5 rounded-full cursor-pointer hover:bg-gray-800 active:scale-95 transition-all shadow-md">
+          <div onclick="handleHeaderClick()" class="flex items-center space-x-2 bg-gray-900 text-white pl-2 pr-3.5 py-1.5 rounded-full cursor-pointer hover:bg-gray-800 active:scale-95 transition-all shadow-md">
             <img src="${avatarUrl}" class="w-6 h-6 rounded-full object-cover border border-gray-700 shadow-sm" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop'" />
             <span class="font-bold text-[13px] text-gray-200 max-w-[80px] truncate">${fullName}</span>
           </div>
         `;
 
-        // 6. 會員資料頁內容 (已登入)
+        // 會員資料頁內容 (已登入)
         profileContainer.innerHTML = `
           <div class="space-y-6">
-            <!-- 6-1. 頭像 / 6-2. 名稱 / 6-5. 權限 -->
+            <!-- 頭像 / 名稱 / 會員層級對應中文字 -->
             <div class="text-center py-6 space-y-3 bg-gray-50 rounded-3xl border border-gray-100 p-4 shadow-inner">
               <img src="${avatarUrl}" class="w-24 h-24 rounded-full mx-auto object-cover border-4 border-white shadow-lg" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop'" />
               <h3 class="text-[20px] font-bold text-gray-900">${fullName}</h3>
-              <span class="inline-block bg-orange-100 text-orange-600 text-[13px] px-4 py-1 rounded-full font-bold">一般員工</span>
+              <span class="inline-block ${levelBadgeClass} text-[13px] px-4 py-1 rounded-full font-bold">${levelText}</span>
             </div>
 
-            <!-- 詳細資料表格 (6-3. 加入時間 / 6-4. Email) -->
+            <!-- 詳細資料表格 (顯示自訂資料表的即時數值) -->
             <div class="bg-white rounded-3xl border border-gray-100 divide-y divide-gray-100 overflow-hidden shadow-sm">
               <div class="p-4 flex justify-between items-center text-[15px]">
                 <span class="text-gray-400 font-medium">電子信箱</span>
-                <span class="text-gray-800 font-bold">${email}</span>
+                <span class="text-gray-800 font-bold truncate max-w-[200px]">${email}</span>
               </div>
               <div class="p-4 flex justify-between items-center text-[15px]">
                 <span class="text-gray-400 font-medium">加入時間</span>
                 <span class="text-gray-800 font-bold">${joinedDateStr}</span>
               </div>
               <div class="p-4 flex justify-between items-center text-[15px]">
-                <span class="text-gray-400 font-medium">會員權限</span>
-                <span class="text-gray-800 font-bold">一般員工</span>
+                <span class="text-gray-400 font-medium">系統權限等級</span>
+                <span class="text-gray-800 font-bold">${levelText} (等級 ${levelNum})</span>
               </div>
             </div>
           </div>
@@ -672,15 +760,15 @@
           </button>
         `;
       } else {
-        // 未登入狀態 (1. 不需要蓋板，直接於 header 的右側顯示「立即登入」)
+        // 未登入狀態 (不強制蓋板，直接於 header 的右側顯示「立即登入」)
         headerAuthArea.innerHTML = `
-          <button onclick="openProfileModal()" class="bg-orange-500 text-white px-3.5 py-2.5 rounded-full text-[13px] font-bold shadow-md hover:bg-orange-600 active:scale-95 transition-all flex items-center space-x-1">
+          <button onclick="handleHeaderClick()" class="bg-orange-500 text-white px-3.5 py-2 rounded-full text-[13px] font-bold shadow-md hover:bg-orange-600 active:scale-95 transition-all flex items-center space-x-1">
             <i data-lucide="log-in" class="w-4 h-4"></i>
             <span>立即登入</span>
           </button>
         `;
 
-        // 4. 登入引導內容與登入按鈕 (當訪客點擊立即登入後，在會員個人資料頁下方顯示登入按鈕)
+        // 登入引導內容與登入按鈕 (當訪客點擊立即登入後，在會員個人資料頁下方顯示登入按鈕)
         profileContainer.innerHTML = `
           <div class="space-y-6 flex-grow flex flex-col justify-center">
             <div class="text-center py-8 space-y-4 bg-gray-50 rounded-3xl border border-gray-100 p-6 shadow-inner my-auto">
@@ -694,7 +782,7 @@
             </div>
           </div>
 
-          <!-- 4. 登入按鈕 放在會員資料頁下方 -->
+          <!-- 登入引導按鈕放置在下方 -->
           <div class="space-y-3">
             <button onclick="handleGoogleLogin()" class="w-full flex items-center justify-center bg-white border border-gray-200 text-gray-700 font-bold py-4 px-4 rounded-2xl shadow-lg hover:bg-gray-50 active:scale-95 transition-all text-[15px] space-x-3">
               <svg class="w-5 h-5" viewBox="0 0 24 24">
@@ -712,6 +800,11 @@
         `;
       }
       lucide.createIcons();
+    }
+
+    // 處理頂部狀態列的點擊動作
+    function handleHeaderClick() {
+      openProfileModal();
     }
 
     // 會員資料頁面開關控制
@@ -749,6 +842,7 @@
         await window.supabaseClient.auth.signOut();
       }
       state.user = null;
+      state.userProfile = null;
       renderAll();
     }
 
@@ -815,7 +909,6 @@
       renderAll();
     }
 
-    // 搜尋與過濾
     function handleSearch(val) {
       state.searchTerm = val.trim().toLowerCase();
       renderList();
@@ -1061,7 +1154,7 @@
               </div>
             </div>
 
-            <!-- 時段菜單編輯按鈕 -->
+            <!-- 時段菜單編輯按鈕 (修復完成) -->
             ${!state.isBatchMode ? `
               <div class="flex-shrink-0 border-l border-gray-100 pl-3 ml-2">
                 <button onclick="openEditMenu(event, '${menu.id}')" class="p-2 text-gray-400 hover:text-blue-500 transition-colors"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
@@ -1206,6 +1299,7 @@
       activeTouchListType = '';
       renderAll();
     }
+
 
     // --- 批次編輯邏輯 ---
     function toggleBatchMode(force) {
@@ -1889,6 +1983,7 @@
       document.getElementById('modal-store-settings').classList.add('hidden');
     }
 
+    // 切換全域顧客備註
     function toggleGlobalRemarks() {
       state.storeSettings.globalRemarksEnabled = !state.storeSettings.globalRemarksEnabled;
       document.getElementById('btn-global-remarks-toggle').innerHTML = state.storeSettings.globalRemarksEnabled ? '<i data-lucide="toggle-right" class="text-orange-500 w-11 h-11"></i>' : '<i data-lucide="toggle-left" class="text-gray-300 w-11 h-11"></i>';
