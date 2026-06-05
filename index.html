@@ -494,10 +494,16 @@
     window.state = state;
     Object.assign(window, Auth, Common);
 
-    window.addEventListener("DOMContentLoaded", async () => {
+    async function initializeApp() {
       await Auth.initAuth();
-      Common.renderAll();
-    });
+      Common.switchTab(state.activeTab);
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', initializeApp);
+    } else {
+      initializeApp();
+    }
   </script>
 </body>
 </html>
